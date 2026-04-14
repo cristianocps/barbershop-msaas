@@ -31,12 +31,13 @@ const navGroups = [
             { path: '/servicos', icon: <Scissors size={18} />, label: 'Serviços', minPolicy: 'profissional' },
         ]
     },
-    {
-        label: 'Sistema',
-        items: [
-            { path: '/configuracoes', icon: <Settings size={18} />, label: 'Configurações', minPolicy: 'admin' },
-        ]
-    },
+    // ── Configurações temporariamente oculto ──────────────────
+    // {
+    //     label: 'Sistema',
+    //     items: [
+    //         { path: '/configuracoes', icon: <Settings size={18} />, label: 'Configurações', minPolicy: 'admin' },
+    //     ]
+    // },
 ];
 
 export function Sidebar() {
@@ -156,6 +157,9 @@ export function Sidebar() {
                         <LogOut size={18} />
                         <span>Sair</span>
                     </button>
+                    <div style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.65rem', color: 'rgba(255,255,255,0.2)', letterSpacing: '0.05em' }}>
+                        versão app 1.1.0
+                    </div>
                 </div>
             </aside>
         </>
