@@ -1,6 +1,7 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5101';
-
-// const BASE_URL = import.meta.env.VITE_API_URL || 'http://208.109.189.35:5508/';
+// Em produção, VITE_API_URL é "" (vazio) → chamadas relativas (/api/...)
+// O Nginx intercepta /api/* e faz proxy para o backend internamente.
+// Usa ?? em vez de || para que string vazia não caia no fallback do localhost.
+const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
 /**
  * Cliente HTTP Base (Fetch Wrapper)
