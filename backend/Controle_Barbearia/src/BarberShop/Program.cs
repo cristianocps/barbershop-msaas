@@ -199,8 +199,18 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirFrontend", policy =>
     {
+        // Origens fixas + origens extras via variável de ambiente (para Portainer/Docker)
+        var extraOrigins = builder.Configuration["CorsOrigins"]?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [];
 
-        policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173", "https://barbershopp.com.br", "http://208.109.189.35:5509") // A URL real do seu frontend React do Vite
+        var allOrigins = new[]
+        {
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "https://barbershopp.com.br",
+            "http://208.109.189.35:5509"
+        }.Concat(extraOrigins).Distinct().ToArray();
+
+        policy.WithOrigins(allOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
