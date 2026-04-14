@@ -8,7 +8,7 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 # Argumento de build para a URL da API (passado pelo docker-compose)
-ARG VITE_API_URL=http://208.109.189.35:5508
+ARG VITE_API_URL=http://barbershopp.com.br:5508
 ENV VITE_API_URL=$VITE_API_URL
 
 # Copia package.json e faz install (cache)
