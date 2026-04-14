@@ -207,6 +207,7 @@ builder.Services.AddCors(options =>
             "http://localhost:5173",
             "http://127.0.0.1:5173",
             "https://barbershopp.com.br",
+            "http://barbershopp.com.br",
             "http://208.109.189.35:5509"
         }.Concat(extraOrigins).Distinct().ToArray();
 
