@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/00 - Infra/">
+    <Project Path="src/BarberShop.Infraestrutura/BarberShop.Infraestrutura.csproj" Id="dbc026df-9097-4850-82c7-4463fb896952" />
+  </Folder>
+  <Folder Name="/01 - Servicos/">
+    <Project Path="src/BarberShop.Servicos/BarberShop.Servicos.csproj" Id="5348ad65-d19f-4fbb-91e7-f9bebdfd63de" />
+  </Folder>
+  <Folder Name="/02 - Dominio/">
+    <Project Path="src/BarberShop.Dominio/BarberShop.Dominio.csproj" Id="36069f20-fba3-4d81-b94c-4bbf89e527fc" />
+  </Folder>
+  <Folder Name="/03 - Aplicacao/">
+    <Project Path="src/BarberShop.Aplicacao/BarberShop.Aplicacao.csproj" Id="01b7fe6a-03bc-4cbb-99b8-2ebb6b6b28ad" />
+  </Folder>
+  <Folder Name="/04 - Repositorio/">
+    <Project Path="src/BarberShop.Repositorio/BarberShop.Repositorio.csproj" Id="aac4c930-65a3-4b1e-a26f-e9670adadbc9" />
+  </Folder>
+  <Folder Name="/05 - Apresentacao/">
+    <Project Path="src/BarberShop/BarberShop.csproj" />
+  </Folder>
+</Solution>

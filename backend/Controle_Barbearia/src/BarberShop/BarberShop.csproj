@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Dapper" Version="2.1.72" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.24" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.24" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.24" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.24" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Abstractions" Version="8.0.24" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.24" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.24">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<PackageReference Include="Npgsql" Version="8.0.9" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+		<PackageReference Include="System.Diagnostics.Tools" Version="4.3.0" />
+		<PackageReference Include="System.Text.Json" Version="8.0.6" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\BarberShop.Aplicacao\BarberShop.Aplicacao.csproj" />
+	  <ProjectReference Include="..\BarberShop.Dominio\BarberShop.Dominio.csproj" />
+	  <ProjectReference Include="..\BarberShop.Infraestrutura\BarberShop.Infraestrutura.csproj" />
+	  <ProjectReference Include="..\BarberShop.Repositorio\BarberShop.Repositorio.csproj" />
+	</ItemGroup>
+
+</Project>
