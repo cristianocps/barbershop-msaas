@@ -4,16 +4,19 @@
 # ──────────────────────────────────────────────────────────────
 
 # ── Estágio 1: build ──────────────────────────────────────────
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 
 # Argumento de build para a URL da API (passado pelo docker-compose)
 ARG VITE_API_URL=http://barbershopp.com.br:5508
 ENV VITE_API_URL=$VITE_API_URL
 
-# Copia package.json e faz install (cache)
+# Aumenta memória disponível pro Node durante o build
+ENV NODE_OPTIONS=--max-old-space-size=2048
+
+# Copia package.json e faz install
 COPY package*.json ./
-RUN npm ci --silent
+RUN npm install
 
 # Copia o restante do código e faz build de produção
 COPY . .
