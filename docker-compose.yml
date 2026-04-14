@@ -91,9 +91,6 @@ services:
     build:
       context: ./Barbearia
       dockerfile: Dockerfile
-      args:
-        # URL do backend vista pelo NAVEGADOR do usuario (dominio publico)
-        VITE_API_URL: ${VITE_API_URL:-http://barbershopp.com.br:5508}
     container_name: barbershop_frontend
     restart: unless-stopped
     ports:
