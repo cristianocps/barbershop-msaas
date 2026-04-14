@@ -224,6 +224,15 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// ── Aplica migrations automaticamente no startup ──────────────
+// Isso cria todas as tabelas no PostgreSQL na primeira vez que o container sobe.
+// É idempotente: se as tabelas já existem, não faz nada.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
+
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
