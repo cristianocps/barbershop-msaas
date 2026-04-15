@@ -1,4 +1,4 @@
-﻿using BarberShop.Dominio.Entidade.Configuracoes;
+using BarberShop.Dominio.Entidade.Configuracoes;
 using BarberShop.Dominio.Entidade.DTOs;
 using BarberShop.Dominio.Entidade.Reflection.Texto;
 using BarberShop.Dominio.Enuns;
@@ -55,7 +55,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                     INSERT INTO public.profissionais ( 
                         idempresa, idusuario, descricao, telefone, cor_agenda, dtcriacao, status
                     ) VALUES (
-                        {_identidade.IdEmpresaLogado}, {_identidade.IdUsuarioLogado}, @Descricao, @Telefone, @CorAgenda, @DtCriacao, @Status
+                        {_identidade.IdEmpresaLogado}, {_identidade.IdUsuarioLogado}, @Descricao, @Telefone, @CorAgenda, @DtCriacao, 1
                     )
                     RETURNING id;";
                 }
@@ -128,6 +128,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                         SELECT COUNT(id) AS RecordsTotal 
                         FROM public.profissionais
                         WHERE idempresa = {_identidade.IdEmpresaLogado}
+                          AND status = 1
                     ),
                     FilteredData AS (
                         SELECT 
@@ -137,6 +138,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                             COUNT(id) OVER() AS RecordsFiltered
                         FROM public.profissionais
                         WHERE idempresa = {_identidade.IdEmpresaLogado}
+                          AND status = 1
                           AND (@SearchText::text = '' 
                                OR descricao ILIKE '%' || @SearchText::text || '%')
                     )
