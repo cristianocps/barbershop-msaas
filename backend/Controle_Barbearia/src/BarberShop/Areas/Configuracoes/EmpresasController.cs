@@ -47,8 +47,8 @@ namespace BarberShop.Areas.Empresas
                 if (dados == null)
                     throw new Exception("Dados do fomulário vazio");
 
-                if (string.IsNullOrEmpty(dados.LogoData)) 
-                    throw new TratamentoExcecao("A Logo chegou VAZIA no C#! O C# não conseguiu ler a imagem que o React enviou. Tem certeza que o arquivo era uma imagem válida?");
+                //if (string.IsNullOrEmpty(dados.LogoData)) 
+                //    throw new TratamentoExcecao("A Logo chegou VAZIA no C#! O C# não conseguiu ler a imagem que o React enviou. Tem certeza que o arquivo era uma imagem válida?");
 
                 Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("pt-BR");
                 var context = new ValidationContext(dados, serviceProvider: null, items: null);
