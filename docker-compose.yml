@@ -68,7 +68,7 @@ services:
       JwtSettings__Audience: BarbershopApp
       JwtSettings__ExpirationInMinutes: "1440"
       # Origens extras para CORS alem das fixas no Program.cs
-      CorsOrigins: "https://barbershopp.com.br,http://barbershopp.com.br"
+      CorsOrigins: "http://app.barbershopp.com.br,https://app.barbershopp.com.br"
     ports:
       - "5508:8080"
     depends_on:
@@ -96,7 +96,7 @@ services:
     container_name: barbershop_frontend
     restart: unless-stopped
     ports:
-      - "5509:80"
+      - "80:80"
     depends_on:
       - backend
     networks:
