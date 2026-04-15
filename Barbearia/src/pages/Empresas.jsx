@@ -121,7 +121,7 @@ export function Empresas() {
             confirmText: 'Confirmar',
             onConfirm: async () => {
                 try {
-                    await EmpresasService.alterarStatus(id);
+                    await EmpresasService.alterarStatus(id, 0);
                     toast.success('Status alterado com sucesso.');
                     loadData();
                 } catch (err) {

@@ -114,7 +114,7 @@ export function Configuracoes() {
             confirmText: 'Confirmar',
             onConfirm: async () => {
                 try {
-                    await ServicosAppService.alterarStatus(id);
+                    await ServicosAppService.alterarStatus(id, 0);
                     toast.success('Status alterado com sucesso.');
                     loadData();
                 } catch (err) {

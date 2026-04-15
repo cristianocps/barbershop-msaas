@@ -106,7 +106,7 @@ export function Clientes() {
             confirmText: 'Inativar',
             onConfirm: async () => {
                 try {
-                    await ClientesService.alterarStatus(id);
+                    await ClientesService.alterarStatus(id, 0);
                     toast.success('Status do cliente alterado com sucesso.');
                     loadData();
                 } catch (err) {
