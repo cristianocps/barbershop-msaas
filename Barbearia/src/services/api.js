@@ -28,7 +28,7 @@ async function client(endpoint, { body, ...customConfig } = {}) {
     if (customConfig.customBody) {
         config.body = customConfig.customBody;
         delete config.customBody;
-    } else if (body) {
+    } else if (body !== undefined && body !== null) {
         config.body = JSON.stringify(body);
     }
 
