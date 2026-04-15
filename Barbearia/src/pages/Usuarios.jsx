@@ -38,7 +38,8 @@ export function Usuarios() {
             const res = await UsuariosService.carregarGrid({ value: searchTerm }, start, pageSize);
             const list = res?.data || res?.Data || [];
             const recordsTotal = res?.recordsTotal || res?.RecordsTotal || 0;
-            setData(list);
+            const display = canInativar ? list : list.filter(r => (r.status ?? r.Status) === 1);
+            setData(display);
             setTotal(recordsTotal);
         } catch (err) {
             setError(err.message || 'Erro ao carregar usuários');
@@ -46,7 +47,7 @@ export function Usuarios() {
         } finally {
             setLoading(false);
         }
-    }, [page, pageSize, searchTerm]);
+    }, [page, pageSize, searchTerm, canInativar]);
 
     useEffect(() => { loadData(); }, [loadData]);
 

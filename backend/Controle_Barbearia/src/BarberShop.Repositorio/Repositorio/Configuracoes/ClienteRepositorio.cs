@@ -78,7 +78,6 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                         SELECT COUNT(id) AS RecordsTotal 
                         FROM public.clientes
                         WHERE idempresa = {_identidade.IdEmpresaLogado}
-                          AND status = 1
                     ),
                     FilteredData AS (
                         SELECT 
@@ -88,7 +87,6 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                             COUNT(id) OVER() AS RecordsFiltered
                         FROM public.clientes
                         WHERE idempresa = {_identidade.IdEmpresaLogado}
-                          AND status = 1
                           AND (@SearchText::text = ''
                                OR descricao ILIKE '%' || @SearchText::text || '%'
                                OR telefone ILIKE '%' || @SearchText::text || '%')

@@ -36,7 +36,9 @@ export function Configuracoes() {
             setError(null);
             const start = (page - 1) * pageSize;
             const res = await ServicosAppService.carregarGrid({ value: searchTerm }, start, pageSize);
-            setData(res?.data || res?.Data || []);
+            const list = res?.data || res?.Data || [];
+            const display = canInativar ? list : list.filter(r => (r.status ?? r.Status) === 1);
+            setData(display);
             setTotal(res?.recordsTotal || res?.RecordsTotal || 0);
         } catch (err) {
             setError(err.message || 'Erro ao carregar configurações');
@@ -44,7 +46,7 @@ export function Configuracoes() {
         } finally {
             setLoading(false);
         }
-    }, [page, pageSize, searchTerm]);
+    }, [page, pageSize, searchTerm, canInativar]);
 
     useEffect(() => { loadData(); }, [loadData]);
 

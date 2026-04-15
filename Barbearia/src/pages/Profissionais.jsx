@@ -37,7 +37,8 @@ export function Profissionais() {
             const start = (page - 1) * pageSize;
             const res = await ProfissionaisService.carregarGrid({ value: searchTerm }, start, pageSize);
             const list = res?.data || res?.Data || [];
-            setData(list);
+            const display = canInativar ? list : list.filter(r => (r.status ?? r.Status) === 1);
+            setData(display);
             setTotal(res?.recordsTotal || res?.RecordsTotal || 0);
         } catch (err) {
             setError(err.message || 'Erro ao carregar profissionais');
@@ -45,7 +46,7 @@ export function Profissionais() {
         } finally {
             setLoading(false);
         }
-    }, [page, pageSize, searchTerm]);
+    }, [page, pageSize, searchTerm, canInativar]);
 
     useEffect(() => { loadData(); }, [loadData]);
 
