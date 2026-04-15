@@ -63,7 +63,7 @@ namespace BarberShop.Repositorio.Repositorio.Acessos
                         ) VALUES (
                             @IdEmpresa,
                             @Documento, @Descricao, @Email, @Telefone, @Cidade, 
-                            @Senha, @IdClains, @DtCriacao, @Status
+                            @Senha, @IdClains, @DtCriacao, 1
                         )
                         RETURNING id;";
                 }
@@ -166,12 +166,13 @@ namespace BarberShop.Repositorio.Repositorio.Acessos
                         u.idclains AS IdClains, u.dtcriacao AS DtCriacao, u.status AS Status,
                         p.descricao AS Pefil,
                         COUNT(*) OVER() AS RecordsFiltered,
-                        (SELECT COUNT(*) FROM public.usuarios WHERE idempresa = {_identidade.IdEmpresaLogado}) AS RecordsTotal            
+                        (SELECT COUNT(*) FROM public.usuarios WHERE idempresa = {_identidade.IdEmpresaLogado} AND status = 1) AS RecordsTotal            
                     FROM public.usuarios u
                     LEFT JOIN ""AspNetUserRoles"" aur ON aur.""UserId"" = u.idclains
                     LEFT JOIN ""AspNetRoles""     ar  ON ar.""Id""     = aur.""RoleId""
                     LEFT JOIN public.perfil       p   ON p.idrole      = ar.""Id""
                     WHERE u.idempresa = {_identidade.IdEmpresaLogado}
+                      AND u.status = 1
                       AND (
                           COALESCE(@SearchText, '') = '' 
                           OR u.descricao ILIKE '%' || @SearchText || '%'
