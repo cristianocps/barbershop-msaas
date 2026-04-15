@@ -59,7 +59,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                         INSERT INTO public.empresas ( 
                             idusuario, descricao, dtcriacao, status, cidade, telefone, endereco, logo_data, slug
                         ) VALUES (
-                            {_identidade.IdUsuarioLogado}, @Descricao, @DtCriacao, @Status, @Cidade, @Telefone, @Endereco, @LogoData, @Slug
+                            {_identidade.IdUsuarioLogado}, @Descricao, @DtCriacao, 1, @Cidade, @Telefone, @Endereco, @LogoData, @Slug
                         )
                         RETURNING id::bigint;";
                 }
