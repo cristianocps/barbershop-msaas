@@ -50,7 +50,8 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                             status = @Status,
                             slug = @Slug
                         WHERE 
-                            id = {_identidade.IdEmpresaLogado}
+                            id = @ID
+                            AND idusuario = {_identidade.IdUsuarioLogado}
                         RETURNING id::bigint;";
                 }
                 else
