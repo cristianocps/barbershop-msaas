@@ -49,8 +49,7 @@ services:
   # ──────────────────────────────────────────────
   # Backend  –  ASP.NET Core 8
   # Porta interna Kestrel: 8080
-  # Porta exposta no servidor: 5508
-  # Conecta ao postgres pelo nome do service (interno Docker)
+  # SEM porta exposta externamente — o Nginx do frontend faz o proxy
   # ──────────────────────────────────────────────
   backend:
     build:
@@ -69,8 +68,6 @@ services:
       JwtSettings__ExpirationInMinutes: "1440"
       # Origens extras para CORS alem das fixas no Program.cs
       CorsOrigins: "http://app.barbershopp.com.br,https://app.barbershopp.com.br"
-    ports:
-      - "5508:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -81,12 +78,13 @@ services:
 
   # ──────────────────────────────────────────────
   # Frontend  –  React / Vite (Nginx)
-  # Porta exposta no servidor: 5509
   #
-  # ⚠️  VITE_API_URL usa o IP externo do servidor propositalmente!
-  #    O Vite bake a URL no bundle JS que roda no NAVEGADOR do cliente.
-  #    O navegador não está dentro do Docker — precisa do endereço público.
-  #    Comunicação interna (backend <-> postgres) usa nomes dos services.
+  # ✅ Sem porta exposta diretamente — o Traefik gerencia a entrada
+  # O Traefik escuta na 80/443 e roteia app.barbershopp.com.br → este container
+  # O SSL Let's Encrypt é gerado automaticamente pelo Traefik (certresolver: myresolver)
+  #
+  # ⚠️ Após subir o stack, conectar o container Traefik à rede barbershop_net:
+  #    Portainer → Containers → traefik-traefik-1 → Connected Networks → Join
   # ──────────────────────────────────────────────
   frontend:
     build:
@@ -95,12 +93,28 @@ services:
     pull_policy: build
     container_name: barbershop_frontend
     restart: unless-stopped
-    ports:
-      - "80:80"
     depends_on:
       - backend
     networks:
       - barbershop_net
+    labels:
+      - "traefik.enable=true"
+
+      # ── Rota HTTPS (principal) ──────────────────────────────────
+      - "traefik.http.routers.barbershop.rule=Host(`app.barbershopp.com.br`)"
+      - "traefik.http.routers.barbershop.entrypoints=websecure"
+      - "traefik.http.routers.barbershop.tls=true"
+      - "traefik.http.routers.barbershop.tls.certresolver=myresolver"
+
+      # ── Rota HTTP → redireciona para HTTPS ─────────────────────
+      - "traefik.http.routers.barbershop-http.rule=Host(`app.barbershopp.com.br`)"
+      - "traefik.http.routers.barbershop-http.entrypoints=web"
+      - "traefik.http.routers.barbershop-http.middlewares=https-redirect"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+
+      # ── Porta interna do container que o Traefik vai usar ──────
+      - "traefik.http.services.barbershop.loadbalancer.server.port=80"
 
 # ──────────────────────────────────────────────
 # Volumes persistentes
@@ -112,7 +126,7 @@ volumes:
     driver: local
 
 # ──────────────────────────────────────────────
-# Rede interna compartilhada entre todos os services
+# Redes
 # ──────────────────────────────────────────────
 networks:
   barbershop_net:
