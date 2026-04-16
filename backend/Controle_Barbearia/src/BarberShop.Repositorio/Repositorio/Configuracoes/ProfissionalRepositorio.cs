@@ -52,6 +52,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                         status = @Status
                     WHERE 
                         id = @ID
+                        AND (idusuario = {_identidade.IdUsuarioLogado} OR idempresa = {_identidade.IdEmpresaLogado})
                     RETURNING id;";
                 }
                 else
@@ -102,7 +103,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                         id AS id, 
                         descricao AS text 
                     FROM public.profissionais
-                    WHERE idempresa = {_identidade.IdEmpresaLogado}
+                    WHERE (idusuario = {_identidade.IdUsuarioLogado} OR idempresa = {_identidade.IdEmpresaLogado})
                       AND status = 1 
                       AND (@Search = '' OR descricao ILIKE '%' || @Search || '%')
                     ORDER BY descricao ASC
@@ -132,7 +133,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                     WITH TotalCount AS (
                         SELECT COUNT(id) AS RecordsTotal 
                         FROM public.profissionais
-                        WHERE idempresa = {_identidade.IdEmpresaLogado}
+                        WHERE (idusuario = {_identidade.IdUsuarioLogado} OR idempresa = {_identidade.IdEmpresaLogado})
                     ),
                     FilteredData AS (
                         SELECT 
@@ -141,7 +142,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                             dtcriacao AS DtCriacao, status AS Status,
                             COUNT(id) OVER() AS RecordsFiltered
                         FROM public.profissionais
-                        WHERE idempresa = {_identidade.IdEmpresaLogado}
+                        WHERE (idusuario = {_identidade.IdUsuarioLogado} OR idempresa = {_identidade.IdEmpresaLogado})
                           AND (@SearchText::text = '' 
                                OR descricao ILIKE '%' || @SearchText::text || '%')
                     )
@@ -187,7 +188,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                         dtcriacao AS DtCriacao, status AS Status
                     FROM public.profissionais
                     WHERE id = @IdItem
-                      AND idempresa = {_identidade.IdEmpresaLogado}
+                      AND (idusuario = {_identidade.IdUsuarioLogado} OR idempresa = {_identidade.IdEmpresaLogado})
                 ";
 
                 var _result = await _dbConnectionFactory.QuerySingleOrDefaultAsync<Profissional>(_query, new { IdItem = idItem });
