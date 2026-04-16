@@ -34,11 +34,17 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
             try
             {
                 var _query = "";
+                
+                // Se o frontend enviou um IdEmpresa válido (ex: Admin alterando), usamos ele. 
+                // Caso contrário, mantemos o da identidade logada.
+                long idEmpresaFinal = dados.IdEmpresa > 0 ? dados.IdEmpresa : _identidade.IdEmpresaLogado.GetValueOrDefault();
+
                 if (dados.ID > 0)
                 {
                     _query = $@"
                     UPDATE public.profissionais
                     SET 
+                        idempresa = {idEmpresaFinal},
                         idusuario = @IdUsuario,
                         descricao = @Descricao,
                         telefone = @Telefone,
@@ -46,7 +52,6 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                         status = @Status
                     WHERE 
                         id = @ID
-                        AND idempresa = {_identidade.IdEmpresaLogado}
                     RETURNING id;";
                 }
                 else
@@ -55,7 +60,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                     INSERT INTO public.profissionais ( 
                         idempresa, idusuario, descricao, telefone, cor_agenda, dtcriacao, status
                     ) VALUES (
-                        {_identidade.IdEmpresaLogado}, {_identidade.IdUsuarioLogado}, @Descricao, @Telefone, @CorAgenda, @DtCriacao, 1
+                        {idEmpresaFinal}, {_identidade.IdUsuarioLogado}, @Descricao, @Telefone, @CorAgenda, @DtCriacao, 1
                     )
                     RETURNING id;";
                 }
