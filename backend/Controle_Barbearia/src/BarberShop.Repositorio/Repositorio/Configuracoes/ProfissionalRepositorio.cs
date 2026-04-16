@@ -45,7 +45,6 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                     UPDATE public.profissionais
                     SET 
                         idempresa = {idEmpresaFinal},
-                        idusuario = @IdUsuario,
                         descricao = @Descricao,
                         telefone = @Telefone,
                         cor_agenda = @CorAgenda,
