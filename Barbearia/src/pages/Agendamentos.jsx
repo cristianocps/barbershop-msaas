@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { CalendarDays, Edit2, XCircle } from 'lucide-react';
+import { CalendarDays, Edit2, XCircle, Check, Scissors, Search } from 'lucide-react';
 import { DataGrid } from '../components/UI/DataGrid';
 import { PageHeader, PageSearch } from '../components/UI/PageHeader';
 import { FormModal } from '../components/UI/FormModal';
