@@ -15,22 +15,29 @@ export function useAgendamentoAlert() {
             const res = await AgendamentosService.getPendentesHoje();
             const list = res?.data || res?.Data || [];
             
+            console.log('[Poll] Agendamentos Pendentes:', list.length, 'Itens');
+            
             if (list.length > 0) {
                 // Filtra apenas os que são MAIORES que o último ID notificado
+                console.log('[Poll] Comparando com lastNotifiedId:', lastNotifiedIdRef.current);
                 const fresh = list.filter(a => (a.id || a.Id || a.ID) > lastNotifiedIdRef.current);
                 
                 if (fresh.length > 0) {
+                    console.log('[Poll] Novos agendamentos detectados:', fresh.length);
                     setNewAgendamentos(prev => [...prev, ...fresh]);
                     
                     // Atualiza o último ID para o maior da lista atual
-                    const maxId = Math.max(...list.map(a => (a.id || a.Id || a.ID)));
+                    const ids = list.map(a => (a.id || a.Id || a.ID));
+                    const maxId = Math.max(...ids);
+                    
+                    console.log('[Poll] Atualizando lastNotifiedId para:', maxId);
                     lastNotifiedIdRef.current = maxId;
                     localStorage.setItem('last_notified_id', String(maxId));
                     playNotificationSound();
                 }
             }
         } catch (err) {
-            console.error('Erro no polling de agendamentos:', err);
+            console.error('[Poll] Erro no polling de agendamentos:', err);
         }
     }, [isAuthenticated]);
 
