@@ -74,7 +74,7 @@ export function UsuarioForm({ form, onChange, isEditing }) {
                         onChange={e => set('telefone', e.target.value)}
                     />
                 </FormField>
-                <FormField label="Documento (CPF)">
+                <FormField label="Documento (CPF)" required>
                     <input
                         className="fm-input"
                         type="text"

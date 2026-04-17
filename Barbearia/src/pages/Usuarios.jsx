@@ -94,9 +94,13 @@ export function Usuarios() {
             toast.error('Informe a senha para novo usuário.');
             return;
         }
+        if (!form.documento?.trim()) {
+            toast.error('O documento (CPF/CNPJ) é obrigatório.');
+            return;
+        }
         setSaving(true);
         try {
-            await UsuariosService.alterar({
+            const res = await UsuariosService.alterar({
                 iD:        form.id || 0,
                 descricao: form.descricao || '',
                 email:     form.email,
@@ -108,6 +112,11 @@ export function Usuarios() {
                 idEmpresa: parseInt(form.idEmpresa) || 0,
                 status:    form.status ?? 1,
             });
+            
+            if (res?.JsonTypes === 'error' || res?.jsonTypes === 'error') {
+                throw new Error(res?.Mensagem || res?.mensagem || 'Erro ao salvar usuário.');
+            }
+
             toast.success(isEditing ? 'Usuário atualizado com sucesso!' : 'Usuário cadastrado com sucesso!');
             setModalOpen(false);
             loadData();
