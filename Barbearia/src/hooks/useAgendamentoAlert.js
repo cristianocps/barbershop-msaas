@@ -15,29 +15,24 @@ export function useAgendamentoAlert() {
             const res = await AgendamentosService.getPendentesHoje();
             const list = res?.data || res?.Data || [];
             
-            console.log('[Poll] Agendamentos Pendentes:', list.length, 'Itens');
+            console.log('[Poll] Verificando pendências:', list.length);
+            
+            // Sincroniza a lista de cards com o que está no banco agora
+            setNewAgendamentos(list);
             
             if (list.length > 0) {
-                // Filtra apenas os que são MAIORES que o último ID notificado
-                console.log('[Poll] Comparando com lastNotifiedId:', lastNotifiedIdRef.current);
-                const fresh = list.filter(a => (a.id || a.Id || a.ID) > lastNotifiedIdRef.current);
+                // Toca o som apenas se aparecer um ID MAIOR do que o que já vimos antes
+                const maxIdNoBanco = Math.max(...list.map(a => (a.id || a.Id || a.ID || 0)));
                 
-                if (fresh.length > 0) {
-                    console.log('[Poll] Novos agendamentos detectados:', fresh.length);
-                    setNewAgendamentos(prev => [...prev, ...fresh]);
-                    
-                    // Atualiza o último ID para o maior da lista atual
-                    const ids = list.map(a => (a.id || a.Id || a.ID));
-                    const maxId = Math.max(...ids);
-                    
-                    console.log('[Poll] Atualizando lastNotifiedId para:', maxId);
-                    lastNotifiedIdRef.current = maxId;
-                    localStorage.setItem('last_notified_id', String(maxId));
+                if (maxIdNoBanco > lastNotifiedIdRef.current) {
+                    console.log('[Poll] NOVO agendamento real detectado! Tocando som.');
                     playNotificationSound();
+                    lastNotifiedIdRef.current = maxIdNoBanco;
+                    localStorage.setItem('last_notified_id', String(maxIdNoBanco));
                 }
             }
         } catch (err) {
-            console.error('[Poll] Erro no polling de agendamentos:', err);
+            console.error('[Poll] Erro ao sincronizar alertas:', err);
         }
     }, [isAuthenticated]);
 
