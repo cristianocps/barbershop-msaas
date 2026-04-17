@@ -178,6 +178,7 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                             a.dtagendamento         AS DtAgendamento,
                             a.dtcriacao             AS DtCriacao,
                             a.status                AS Status,
+                            a.comprovante_pix       AS ComprovantePix,
                             COALESCE(p.descricao, '') AS NomeProfissional,
                             COALESCE((
                                 SELECT SUM(i.valor_cobrado)
@@ -270,6 +271,38 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                 _result.Itens = itens.ToList();
 
                 return await Task.FromResult(_result).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                throw new TratamentoExcecao(ex.Message.Traduzir());
+            }
+        }
+
+        public async Task<IEnumerable<AgendamentoPendenteDTO>> GetAgendamentosPendentesHoje()
+        {
+            try
+            {
+                var dtHojeStart = DateTime.Now.Date;
+                var dtHojeEnd = dtHojeStart.AddDays(1).AddTicks(-1);
+
+                var query = $@"
+                    SELECT 
+                        a.id AS Id,
+                        a.descricao AS Descricao,
+                        COALESCE(c.descricao, '') AS NomeCliente,
+                        a.telefone AS Telefone,
+                        a.dtagendamento AS DtAgendamento,
+                        a.comprovante_pix AS ComprovantePix
+                    FROM public.agendamentos a
+                    LEFT JOIN public.clientes c ON c.id = a.idcliente
+                    WHERE a.idempresa = {_identidade.IdEmpresaLogado}
+                      AND a.status = 0
+                      AND a.dtcriacao >= @DtStart AND a.dtcriacao <= @DtEnd
+                    ORDER BY a.dtagendamento ASC;
+                ";
+
+                var result = await _dbConnectionFactory.QueryAsync<AgendamentoPendenteDTO>(query, new { DtStart = dtHojeStart, DtEnd = dtHojeEnd });
+                return result;
             }
             catch (Exception ex)
             {

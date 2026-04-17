@@ -1,4 +1,4 @@
-﻿using BarberShop.Dominio.Entidade.Agendamentos;
+using BarberShop.Dominio.Entidade.Agendamentos;
 using BarberShop.Dominio.Entidade.DTOs;
 using BarberShop.Dominio.Interfaces.Repositorios.Agendamentos;
 using BarberShop.Dominio.Interfaces.Repositorios.Configuracoes;
@@ -42,6 +42,11 @@ namespace BarberShop.Aplicacao.Entidades.Agendamentos
         public async Task<Agendamento> Editar(long idItem)
         {
             return await _agendamentoRepositorio.Editar(idItem).ConfigureAwait(false);
+        }
+
+        public async Task<IEnumerable<AgendamentoPendenteDTO>> GetAgendamentosPendentesHoje()
+        {
+            return await _agendamentoRepositorio.GetAgendamentosPendentesHoje().ConfigureAwait(false);
         }
 
 

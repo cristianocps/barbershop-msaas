@@ -213,6 +213,33 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
         }
 
         // ─────────────────────────────────────────────────────────
+        // 4.1 Dados bancários (PIX) da empresa
+        // ─────────────────────────────────────────────────────────
+        public async Task<IEnumerable<dynamic>> CarregarDadosBancariosPublicos(long idEmpresa)
+        {
+            try
+            {
+                // Busca as chaves PIX ativas. 
+                // Nota: O ideal seria ter uma coluna não criptografada para exibição na vitrine.
+                var _query = @"
+                    SELECT 
+                        t.descricao AS Tipo,
+                        d.descricao AS Chave
+                    FROM public.dadosbancarios d
+                    JOIN public.tipochave t ON t.id = d.idtipochavepix
+                    WHERE d.idempresa = @IdEmpresa
+                      AND d.status = 1";
+
+                var result = await _dbConnectionFactory.QueryAsync<dynamic>(_query, new { IdEmpresa = idEmpresa });
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new TratamentoExcecao(ex.Message.Traduzir());
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────
         // 5. Confirmar agendamento (upsert cliente + agendamento + itens)
         // ─────────────────────────────────────────────────────────
         public async Task<VitrineConfirmarRetornoDTO> ConfirmarAgendamento(VitrineConfirmarDTO dados)
@@ -249,9 +276,9 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
 
                 var _queryAgendamento = @"
                     INSERT INTO public.agendamentos
-                        (idempresa, idusuario, idcliente, idprofissional, descricao, telefone, observacao, dtagendamento, dtcriacao, status)
+                        (idempresa, idusuario, idcliente, idprofissional, descricao, telefone, observacao, dtagendamento, dtcriacao, status, comprovante_pix)
                     VALUES
-                        (@IdEmpresa, 0, @IdCliente, @IdProfissional, @Descricao, @Telefone, @Observacao, @DtAgendamento, NOW(), 0)
+                        (@IdEmpresa, 0, @IdCliente, @IdProfissional, @Descricao, @Telefone, @Observacao, @DtAgendamento, NOW(), 0, @ComprovantePix)
                     RETURNING id;";
 
                 var _idAgendamento = await _dbConnectionFactory.QuerySingleOrDefaultAsync<long>(
@@ -263,7 +290,8 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                         Descricao      = _descricao.VarcharToSQL(),
                         Telefone       = _telefoneClean,
                         Observacao     = dados.Observacao ?? "",
-                        DtAgendamento  = dados.DtAgendamento
+                        DtAgendamento  = dados.DtAgendamento,
+                        ComprovantePix = string.IsNullOrWhiteSpace(dados.ComprovantePix) ? null : dados.ComprovantePix
                     });
 
                 if (_idAgendamento == 0)

@@ -17,6 +17,7 @@ namespace BarberShop.Dominio.Entidade.Agendamentos
         public string TelefoneCliente { get; set; } = default!;
         public string Observacao { get; set; } = "";
         public string MensagemWhatsApp { get; set; } = "";
+        public string? ComprovantePix { get; set; }
         public List<VitrineItemDTO> Servicos { get; set; } = new List<VitrineItemDTO>();
     }
 }

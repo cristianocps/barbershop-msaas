@@ -70,6 +70,10 @@ namespace BarberShop.Dominio.Entidade.Agendamentos
         [Column("status", Order = 11, TypeName = "integer")]
         public int Status { get; set; } = default!;
 
+        [DataType(DataType.Text)]
+        [Column("comprovante_pix", Order = 12, TypeName = "text")]
+        public string? ComprovantePix { get; set; }
+
         [NotMapped]
         [ScaffoldColumn(false)]
         public long RecordsTotal { get; set; } = default!;

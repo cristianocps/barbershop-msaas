@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
+import { AgendamentoAlert } from '../UI/AgendamentoAlert';
 
 export function MainLayout() {
     return (
@@ -11,6 +12,7 @@ export function MainLayout() {
                     <Outlet />
                 </div>
             </main>
+            <AgendamentoAlert />
         </div>
     );
 }

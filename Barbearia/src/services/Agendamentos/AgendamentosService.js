@@ -20,5 +20,8 @@ export const AgendamentosService = {
     },
     alterarStatus: (id, status) => {
         return api.put(`${BASE_PATH}/alterar-status-agendamentos/${id}`, status);
+    },
+    getPendentesHoje: () => {
+        return api.get(`${BASE_PATH}/get-pendentes-hoje`);
     }
 };

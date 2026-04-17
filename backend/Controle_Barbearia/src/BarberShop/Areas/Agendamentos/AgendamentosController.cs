@@ -1,4 +1,4 @@
-﻿using BarberShop.Controllers;
+using BarberShop.Controllers;
 using BarberShop.Dominio.Entidade.Agendamentos;
 using BarberShop.Dominio.Entidade.Configuracoes;
 using BarberShop.Dominio.Entidade.DTOs;
@@ -130,6 +130,20 @@ namespace BarberShop.Areas.Agendamentos
             try
             {
                 var _result = await _agendamentoServicos.Editar(idItem);
+                var _return = await ResponseJson(ResponseJsonTypes.Success, "", _result).ConfigureAwait(false);
+
+                return await Task.FromResult(_return).ConfigureAwait(false);
+            }
+            catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }
+            catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
+        }
+
+        [HttpGet("get-pendentes-hoje")]
+        public async Task<JsonResult> GetPendentesHoje()
+        {
+            try
+            {
+                var _result = await _agendamentoServicos.GetAgendamentosPendentesHoje();
                 var _return = await ResponseJson(ResponseJsonTypes.Success, "", _result).ConfigureAwait(false);
 
                 return await Task.FromResult(_return).ConfigureAwait(false);

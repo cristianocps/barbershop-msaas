@@ -218,6 +218,21 @@ export function Agendamentos() {
                     <button title="Editar" onClick={() => openEdit(row)} style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(246,176,1,0.1)', color: '#e09800', border: '1px solid rgba(246,176,1,0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Edit2 size={14} />
                     </button>
+                    {(row.comprovantePix || row.ComprovantePix) && (
+                        <button title="Ver Comprovante PIX" onClick={() => {
+                            const img = row.comprovantePix || row.ComprovantePix;
+                            askConfirm({
+                                title: 'Comprovante PIX',
+                                message: <img src={img} alt="Comprovante" style={{ width: '100%', borderRadius: '8px' }} />,
+                                type: 'success',
+                                confirmText: 'Fechar',
+                                cancelText: '',
+                                onConfirm: () => {}
+                            });
+                        }} style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(34,197,94,0.08)', color: '#16a34a', border: '1px solid rgba(34,197,94,0.15)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Scissors size={14} />
+                        </button>
+                    )}
                     <button title="Cancelar" onClick={() => handleInativar(row.id || row.ID)} style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.15)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <XCircle size={14} />
                     </button>
@@ -228,6 +243,7 @@ export function Agendamentos() {
 
     const renderCard = (row) => {
         const s = getStatusInfo(row);
+        const hasPix = row.comprovantePix || row.ComprovantePix;
         return (
             <div style={{ background: '#fff', borderRadius: '14px', padding: '14px', border: '1px solid #e5e7eb', marginBottom: '10px', boxShadow: '0 2px 6px rgba(0,0,0,0.04)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
@@ -243,12 +259,27 @@ export function Agendamentos() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '8px 0', borderTop: '1px solid #f3f4f6', borderBottom: '1px solid #f3f4f6', marginBottom: '10px' }}>
                     <span style={{ fontSize: '0.82rem', color: '#6b7280' }}>📅 {getData(row)}</span>
                     <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#16a34a' }}>💰 {getValorTotal(row)}</span>
+                    {hasPix && <span style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 'bold' }}>✅ Comprovante PIX Anexado</span>}
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                    <button onClick={() => openEdit(row)} style={{ flex: 1, padding: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'rgba(246,176,1,0.1)', color: '#e09800', borderRadius: '10px', fontWeight: 700, border: '1px solid rgba(246,176,1,0.2)', cursor: 'pointer', fontSize: '0.825rem' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button onClick={() => openEdit(row)} style={{ flex: 1, minWidth: '80px', padding: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'rgba(246,176,1,0.1)', color: '#e09800', borderRadius: '10px', fontWeight: 700, border: '1px solid rgba(246,176,1,0.2)', cursor: 'pointer', fontSize: '0.825rem' }}>
                         <Edit2 size={13} /> Editar
                     </button>
-                    <button onClick={() => handleInativar(row.id || row.ID)} style={{ flex: 1, padding: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'rgba(239,68,68,0.08)', color: '#ef4444', borderRadius: '10px', fontWeight: 700, border: '1px solid rgba(239,68,68,0.15)', cursor: 'pointer', fontSize: '0.825rem' }}>
+                    {hasPix && (
+                        <button onClick={() => {
+                            askConfirm({
+                                title: 'Comprovante PIX',
+                                message: <img src={hasPix} alt="Comprovante" style={{ width: '100%', borderRadius: '8px' }} />,
+                                type: 'success',
+                                confirmText: 'Fechar',
+                                cancelText: '',
+                                onConfirm: () => {}
+                            });
+                        }} style={{ flex: 1, minWidth: '80px', padding: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'rgba(34,197,94,0.08)', color: '#16a34a', borderRadius: '10px', fontWeight: 700, border: '1px solid rgba(34,197,94,0.15)', cursor: 'pointer', fontSize: '0.825rem' }}>
+                            <Scissors size={13} /> Ver Pix
+                        </button>
+                    )}
+                    <button onClick={() => handleInativar(row.id || row.ID)} style={{ flex: 1, minWidth: '80px', padding: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'rgba(239,68,68,0.08)', color: '#ef4444', borderRadius: '10px', fontWeight: 700, border: '1px solid rgba(239,68,68,0.15)', cursor: 'pointer', fontSize: '0.825rem' }}>
                         <XCircle size={13} /> Cancelar
                     </button>
                 </div>

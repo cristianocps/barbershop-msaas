@@ -1,4 +1,4 @@
-﻿using BarberShop.Dominio.Entidade.Agendamentos;
+using BarberShop.Dominio.Entidade.Agendamentos;
 using BarberShop.Dominio.Entidade.Configuracoes;
 using BarberShop.Dominio.Interfaces.Repositorios.Agendamentos;
 using BarberShop.Dominio.Interfaces.Servicos.Agendamentos;
@@ -41,6 +41,11 @@ namespace BarberShop.Aplicacao.Entidades.Agendamentos
         public async Task<VitrineConfirmarRetornoDTO> ConfirmarAgendamento(VitrineConfirmarDTO dados)
         {
             return await _vitrineRepositorio.ConfirmarAgendamento(dados).ConfigureAwait(true);
+        }
+
+        public async Task<IEnumerable<dynamic>> CarregarDadosBancariosPublicos(long idEmpresa)
+        {
+            return await _vitrineRepositorio.CarregarDadosBancariosPublicos(idEmpresa).ConfigureAwait(true);
         }
 
         public void Dispose()

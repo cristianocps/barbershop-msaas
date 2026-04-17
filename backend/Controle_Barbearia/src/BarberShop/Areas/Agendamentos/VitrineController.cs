@@ -1,4 +1,4 @@
-﻿using BarberShop.Controllers;
+using BarberShop.Controllers;
 using BarberShop.Dominio.Entidade.Agendamentos;
 using BarberShop.Dominio.Entidade.DTOs;
 using BarberShop.Dominio.Entidade.Reflection.Texto;
@@ -95,6 +95,18 @@ namespace BarberShop.Areas.Agendamentos
             try
             {
                 var result = await _vitrineServicos.CarregarHorariosLivres(idProfissional, data);
+                return await ResponseJson(ResponseJsonTypes.Success, "", result);
+            }
+            catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }
+            catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
+        }
+
+        [HttpGet("dados-bancarios/{idEmpresa}")]
+        public async Task<IActionResult> CarregarDadosBancarios(long idEmpresa)
+        {
+            try
+            {
+                var result = await _vitrineServicos.CarregarDadosBancariosPublicos(idEmpresa);
                 return await ResponseJson(ResponseJsonTypes.Success, "", result);
             }
             catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }

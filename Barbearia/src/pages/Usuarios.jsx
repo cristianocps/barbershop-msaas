@@ -66,16 +66,16 @@ export function Usuarios() {
             const dados = res?.data || res?.Data || res;
             if (!dados) throw new Error('Dados não encontrados');
             setForm({
-                id:        dados.id        ?? dados.ID        ?? dados.Id        ?? id,
+                id: dados.id ?? dados.ID ?? dados.Id ?? id,
                 descricao: dados.descricao ?? dados.Descricao ?? dados.nome ?? dados.Nome ?? '',
-                email:     dados.email     ?? dados.Email     ?? dados.logon ?? dados.Logon ?? '',
-                senha:     '', // senha nunca é retornada pelo backend
-                telefone:  dados.telefone  ?? dados.Telefone  ?? '',
+                email: dados.email ?? dados.Email ?? dados.logon ?? dados.Logon ?? '',
+                senha: '', // senha nunca é retornada pelo backend
+                telefone: dados.telefone ?? dados.Telefone ?? '',
                 documento: dados.documento ?? dados.Documento ?? '',
-                cidade:    dados.cidade    ?? dados.Cidade    ?? '',
-                idClains:  dados.idClains  ?? dados.IdClains  ?? '',
+                cidade: dados.cidade ?? dados.Cidade ?? '',
+                idClains: dados.idClains ?? dados.IdClains ?? '',
                 idEmpresa: dados.idEmpresa ?? dados.IdEmpresa ?? 0,
-                status:    dados.status    ?? dados.Status    ?? 1,
+                status: dados.status ?? dados.Status ?? 1,
             });
         } catch (err) {
             toast.error('Erro ao carregar dados: ' + err.message);
@@ -101,18 +101,18 @@ export function Usuarios() {
         setSaving(true);
         try {
             const res = await UsuariosService.alterar({
-                iD:        form.id || 0,
+                iD: form.id || 0,
                 descricao: form.descricao || '',
-                email:     form.email,
-                senha:     form.senha || '',
-                telefone:  form.telefone || '',
+                email: form.email,
+                senha: form.senha || '',
+                telefone: form.telefone || '',
                 documento: form.documento || '',
-                cidade:    form.cidade   || '',
-                idClains:  form.idClains || null,
+                cidade: form.cidade || '',
+                idClains: form.idClains || null,
                 idEmpresa: parseInt(form.idEmpresa) || 0,
-                status:    form.status ?? 1,
+                status: form.status ?? 1,
             });
-            
+
             if (res?.JsonTypes === 'error' || res?.jsonTypes === 'error') {
                 throw new Error(res?.Mensagem || res?.mensagem || 'Erro ao salvar usuário.');
             }

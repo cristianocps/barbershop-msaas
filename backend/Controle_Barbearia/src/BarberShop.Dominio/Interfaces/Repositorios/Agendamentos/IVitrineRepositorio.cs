@@ -1,4 +1,4 @@
-﻿using BarberShop.Dominio.Entidade.Agendamentos;
+using BarberShop.Dominio.Entidade.Agendamentos;
 using BarberShop.Dominio.Entidade.Configuracoes;
 using System;
 using System.Collections.Generic;
@@ -14,6 +14,7 @@ namespace BarberShop.Dominio.Interfaces.Repositorios.Agendamentos
         Task<IEnumerable<Servico>> CarregarServicosPublicos(long idEmpresa);
         Task<IEnumerable<Profissional>> CarregarProfissionaisPublicos(long idEmpresa);
         Task<IEnumerable<string>> CarregarHorariosLivres(long idProfissional, DateTime data);
+        Task<IEnumerable<dynamic>> CarregarDadosBancariosPublicos(long idEmpresa);
         Task<VitrineConfirmarRetornoDTO> ConfirmarAgendamento(VitrineConfirmarDTO dados);
     }
 }

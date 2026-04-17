@@ -18,5 +18,8 @@ export const VitrineService = {
     },
     confirmarAgendamento: (dados) => {
         return api.post(`${BASE_PATH}/confirmar`, dados);
+    },
+    carregarDadosBancarios: (idEmpresa) => {
+        return api.get(`${BASE_PATH}/dados-bancarios/${idEmpresa}`);
     }
 };

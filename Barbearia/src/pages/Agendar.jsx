@@ -32,6 +32,8 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(startOfToday());
   const [selectedTime, setSelectedTime] = useState(null);
   const [customer, setCustomer] = useState({ name: '', phone: '', notes: '' });
+  const [chavesPix, setChavesPix] = useState([]);
+  const [comprovanteBase64, setComprovanteBase64] = useState(null);
 
   // 1. Carregar Dados Iniciais (Empresa, Serviços, Profissionais)
   useEffect(() => {
@@ -55,13 +57,15 @@ function App() {
         empresaObj.id = validId;
         setEmpresa(empresaObj);
 
-        const [servicosRes, profissionaisRes] = await Promise.all([
+        const [servicosRes, profissionaisRes, pixRes] = await Promise.all([
           VitrineService.carregarServicos(validId),
-          VitrineService.carregarProfissionais(validId)
+          VitrineService.carregarProfissionais(validId),
+          VitrineService.carregarDadosBancarios(validId)
         ]);
 
         setServicos(servicosRes?.data || servicosRes?.Data || servicosRes?.dados || servicosRes || []);
         setProfissionais(profissionaisRes?.data || profissionaisRes?.Data || profissionaisRes?.dados || profissionaisRes || []);
+        setChavesPix(pixRes?.data || pixRes?.Data || pixRes?.dados || pixRes || []);
       } catch (err) {
         toast.error(err.message || 'Erro ao carregar dados da barbearia');
         // navigate('/login');
@@ -104,6 +108,17 @@ function App() {
     );
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setComprovanteBase64(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const days = Array.from({ length: 14 }).map((_, i) => addDays(startOfToday(), i));
 
   const totalDuration = selectedServices.reduce((acc, s) => acc + (s.unidade || 0), 0);
@@ -135,6 +150,7 @@ function App() {
         nomeCliente: customer.name,
         telefoneCliente: '',
         observacao: customer.notes || '',
+        comprovantePix: comprovanteBase64,
         dtAgendamento: `${format(selectedDate, 'yyyy-MM-dd')}T${selectedTime}:00`,
         servicos: selectedServices.map(s => ({
           idServico: s.id,
@@ -204,6 +220,7 @@ function App() {
       setSelectedProfessional(null);
       setSelectedTime(null);
       setCustomer({ name: '', phone: '', notes: '' });
+      setComprovanteBase64(null);
 
     } catch (err) {
       toast.error(err.message || 'Erro ao confirmar agendamento');
@@ -490,6 +507,65 @@ function App() {
                   onChange={e => setCustomer({ ...customer, notes: e.target.value })}
                 />
               </div>
+
+              {/* Seção de PIX */}
+              {chavesPix && chavesPix.length > 0 && (
+                <div className="pix-section mt-6 p-4 rounded-xl border-2 border-dashed border-blue-100 bg-blue-50/30">
+                  <h3 className="text-sm font-bold text-blue-800 mb-3 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                    Pagamento via PIX (Opcional)
+                  </h3>
+                  
+                  <div className="space-y-3 mb-4">
+                    {chavesPix.map((pix, idx) => (
+                      <div key={idx} className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
+                        <div className="text-[10px] uppercase font-bold text-gray-400 mb-1">{pix.tipo || pix.Tipo}</div>
+                        <div className="text-sm font-mono font-bold text-gray-800 break-all select-all cursor-pointer" title="Clique para copiar">
+                          {pix.chave || pix.Chave}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="input-group !mb-0">
+                    <label className="input-label !text-blue-800 !text-xs">Anexar Comprovante</label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                        id="pix-upload"
+                      />
+                      <label 
+                        htmlFor="pix-upload"
+                        className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed cursor-pointer transition-all ${comprovanteBase64 ? 'border-green-500 bg-green-50' : 'border-blue-200 hover:border-blue-400 bg-white'}`}
+                      >
+                        {comprovanteBase64 ? (
+                          <>
+                            <Check size={18} className="text-green-600" />
+                            <span className="text-sm font-bold text-green-700">Comprovante anexado!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Scissors size={18} className="text-blue-600" />
+                            <span className="text-sm font-medium text-blue-600">Escolher foto do comprovante</span>
+                          </>
+                        )}
+                      </label>
+                      {comprovanteBase64 && (
+                        <button 
+                          onClick={() => setComprovanteBase64(null)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-lg"
+                        >
+                          <XCircle size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-2 italic text-center">O envio do comprovante agiliza sua confirmação.</p>
+                </div>
+              )}
             </div>
 
             {/* Resumo Final */}

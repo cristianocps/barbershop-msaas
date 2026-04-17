@@ -1,4 +1,4 @@
-﻿using BarberShop.Dominio.Entidade.Agendamentos;
+using BarberShop.Dominio.Entidade.Agendamentos;
 using BarberShop.Dominio.Entidade.DTOs;
 using System;
 using System.Collections.Generic;
@@ -15,5 +15,6 @@ namespace BarberShop.Dominio.Interfaces.Repositorios.Agendamentos
         Task<IEnumerable<DataSelect2DTO>> CarregarComboAgendamentos(string search, int page, int? length = 10);
         Task<RetornoGridPaginado<Agendamento>> CarregarGridAgendamentos(DataTableSearch search, int start, int draw, int? length = 10);
         Task<Agendamento> Editar(long idItem);
+        Task<IEnumerable<AgendamentoPendenteDTO>> GetAgendamentosPendentesHoje();
     }
 }
