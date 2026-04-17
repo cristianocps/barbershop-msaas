@@ -559,9 +559,11 @@ p {
 
 @media (min-width: 650px) {
   .details-form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 1.5rem;
+    max-width: 600px;
+    margin: 0 auto;
   }
 }
 

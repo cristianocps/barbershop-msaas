@@ -484,8 +484,8 @@ function App() {
 
         {/* PASSO 4: DADOS DO CLIENTE */}
         {passo === 4 && (
-          <section className="step-section show-right">
-            <h2 className="step-title"><Check size={20} /> Seus Dados</h2>
+          <section className="step-section show-right" style={{ maxWidth: '650px', margin: '0 auto' }}>
+            <h2 className="step-title" style={{ justifyContent: 'center' }}><Check size={20} /> Seus Dados</h2>
             <div className="details-form">
               <div className="input-group">
                 <label className="input-label">Seu Nome</label>
