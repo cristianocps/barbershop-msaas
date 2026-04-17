@@ -561,17 +561,27 @@ function App() {
                             e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.02)';
                           }}
                         >
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', marginBottom: '4px', letterSpacing: '0.05em' }}>
-                              {pix.tipo || pix.Tipo}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', marginBottom: '4px', letterSpacing: '0.05em' }}>
+                                {pix.tipo || pix.Tipo}
+                              </div>
+                              <div style={{ 
+                                fontSize: '1.1rem', 
+                                fontFamily: 'monospace', 
+                                fontWeight: 800, 
+                                color: '#1a1a2e', 
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                maxWidth: '100%',
+                                display: 'block'
+                              }} title={chaveAtiva}>
+                                {chaveAtiva}
+                              </div>
+                              <div style={{ fontSize: '0.7rem', color: '#f6b001', marginTop: '6px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Check size={12} /> Clique para copiar
+                              </div>
                             </div>
-                            <div style={{ fontSize: '1.1rem', fontFamily: 'monospace', fontWeight: 800, color: '#1a1a2e', wordBreak: 'break-all' }}>
-                              {chaveAtiva}
-                            </div>
-                            <div style={{ fontSize: '0.7rem', color: '#f6b001', marginTop: '6px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <Check size={12} /> Clique para copiar
-                            </div>
-                          </div>
                           
                           {/* Botão de Copiar Explícito e Elegante */}
                           <div style={{ 
