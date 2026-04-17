@@ -47,7 +47,7 @@ namespace BarberShop.Repositorio.Repositorio.Basico
                     _query = $@"
                       UPDATE public.dadosbancarios
                       SET 
-                          idusuario = @IdUsuario,
+                          idusuario = {_identidade.IdUsuarioLogado},
                           idtipochavepix = @IdTipoChavePix,
                           descricao = @Descricao,
                           chave_vitrine = @ChaveVitrine,

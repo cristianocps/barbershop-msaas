@@ -282,26 +282,33 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
         {
             try
             {
-                var dtHojeStart = DateTime.Now.Date;
-                var dtHojeEnd = dtHojeStart.AddDays(1).AddTicks(-1);
+                var dtLimite = DateTime.Now.AddHours(-24);
 
                 var query = $@"
                     SELECT 
                         a.id AS Id,
                         a.descricao AS Descricao,
-                        COALESCE(c.descricao, '') AS NomeCliente,
+                        COALESCE(c.descricao, a.descricao) AS NomeCliente,
                         a.telefone AS Telefone,
                         a.dtagendamento AS DtAgendamento,
-                        a.comprovante_pix AS ComprovantePix
+                        a.comprovante_pix AS ComprovantePix,
+                        COALESCE(p.descricao, 'Não definido') AS NomeProfissional,
+                        COALESCE((
+                            SELECT STRING_AGG(s.descricao, ' + ')
+                            FROM public.agendamento_itens ai
+                            JOIN public.servicos s ON s.id = ai.idservico
+                            WHERE ai.idagendamento = a.id
+                        ), 'Serviço não informado') AS Servico
                     FROM public.agendamentos a
                     LEFT JOIN public.clientes c ON c.id = a.idcliente
+                    LEFT JOIN public.profissionais p ON p.id = a.idprofissional
                     WHERE a.idempresa = {_identidade.IdEmpresaLogado}
                       AND a.status = 0
-                      AND a.dtcriacao >= @DtStart AND a.dtcriacao <= @DtEnd
+                      AND a.dtcriacao >= @DtStart
                     ORDER BY a.dtagendamento ASC;
                 ";
 
-                var result = await _dbConnectionFactory.QueryAsync<AgendamentoPendenteDTO>(query, new { DtStart = dtHojeStart, DtEnd = dtHojeEnd });
+                var result = await _dbConnectionFactory.QueryAsync<AgendamentoPendenteDTO>(query, new { DtStart = dtLimite });
                 return result;
             }
             catch (Exception ex)
