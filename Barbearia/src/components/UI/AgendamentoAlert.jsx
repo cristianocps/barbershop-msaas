@@ -1,15 +1,10 @@
 import React from 'react';
-import { Bell, X, Eye } from 'lucide-react';
+import { Bell, X, Eye, CalendarDays, User } from 'lucide-react';
 import { useAgendamentoAlert } from '../../hooks/useAgendamentoAlert';
 import { useNavigate } from 'react-router-dom';
 
 function SingleAlert({ ag, removeAlert, navigate }) {
-    React.useEffect(() => {
-        const timer = setTimeout(() => {
-            removeAlert(ag.id || ag.Id || ag.ID);
-        }, 10000); // 10 segundos
-        return () => clearTimeout(timer);
-    }, [ag, removeAlert]);
+    // Card persistente: só sai se o usuário fechar ou clicar em Ver Painel
 
     const handleAction = () => {
         removeAlert(ag.id || ag.Id || ag.ID);
@@ -17,73 +12,95 @@ function SingleAlert({ ag, removeAlert, navigate }) {
     };
 
     const dataHora = (ag?.dtAgendamento || ag?.DtAgendamento) 
-        ? new Date(ag?.dtAgendamento || ag?.DtAgendamento).toLocaleString('pt-BR')
+        ? new Date(ag?.dtAgendamento || ag?.DtAgendamento).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
         : 'Horário não informado';
 
     return (
         <div style={{
-            background: '#fff',
+            background: 'white',
             borderRadius: '16px',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-            border: '1px solid #e5e7eb',
-            padding: '16px',
-            animation: 'slideDown 0.4s ease-out forwards',
-            position: 'relative',
-            overflow: 'hidden',
-            pointerEvents: 'auto'
+            boxShadow: '0 15px 35px rgba(0,0,0,0.15)',
+            borderLeft: '5px solid #f6b001',
+            padding: '20px',
+            marginBottom: '15px',
+            width: '380px',
+            maxWidth: '100%',
+            pointerEvents: 'auto',
+            animation: 'slideDown 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+            position: 'relative'
         }}>
-            <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '4px',
-                height: '100%',
-                background: '#f6b001'
-            }} />
+            {/* Botão Fechar */}
+            <button 
+                onClick={() => removeAlert(ag.id || ag.Id || ag.ID)}
+                style={{
+                    position: 'absolute', top: '15px', right: '15px',
+                    border: 'none', background: 'none', cursor: 'pointer',
+                    color: '#94a3b8', padding: '5px', borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}
+            >
+                <X size={18} />
+            </button>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ padding: '6px', background: 'rgba(246,176,1,0.1)', borderRadius: '8px' }}>
-                        <Bell size={16} color="#f6b001" />
+            {/* Cabeçalho do Alerta */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', marginBottom: '12px' }}>
+                <Bell size={18} fill="#fef3c7" />
+                <strong style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 900 }}>
+                    Novo Agendamento!
+                </strong>
+            </div>
+
+            {/* Nome do Cliente */}
+            <div style={{ fontWeight: 800, fontSize: '1.2rem', color: '#1e293b', marginBottom: '10px' }}>
+                {ag?.NomeCliente || ag?.nomeCliente || ag?.Descricao || ag?.descricao || 'Cliente'}
+            </div>
+            
+            {/* Detalhes do Serviço e Profissional */}
+            <div style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '15px', lineHeight: '1.5' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                        <span style={{ color: '#f6b001', fontWeight: 700 }}>Serviço:</span>
+                        <span style={{ color: '#1e293b', fontWeight: 600 }}>{ag?.Servico || ag?.servico || 'Não informado'}</span>
                     </div>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#f6b001', textTransform: 'uppercase' }}>Novo Agendamento!</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <User size={14} color="#94a3b8" />
+                        <span style={{ fontSize: '0.85rem' }}>Profissional: <strong>{ag?.NomeProfissional || ag?.nomeProfissional || 'A definir'}</strong></span>
+                    </div>
                 </div>
-                <button onClick={() => removeAlert(ag.id || ag.Id || ag.ID)} style={{ color: '#9ca3af', cursor: 'pointer', background: 'none', border: 'none' }}>
-                    <X size={18} />
-                </button>
+
+                <div style={{ 
+                    display: 'flex', alignItems: 'center', gap: '6px', 
+                    marginTop: '10px', fontSize: '0.85rem', color: '#64748b',
+                    background: '#f8fafc', padding: '6px 10px', borderRadius: '8px',
+                    width: 'fit-content'
+                }}>
+                    <CalendarDays size={14} /> {dataHora}
+                </div>
             </div>
 
-            <div onClick={handleAction} style={{ marginBottom: '12px', cursor: 'pointer' }}>
-                <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#111827' }}>{ag?.nomeCliente || ag?.NomeCliente || ag?.descricao || 'Cliente'}</div>
-                <div style={{ fontSize: '0.8rem', color: '#6b7280' }}> Serviço: {ag?.servico || ag?.Servico || 'Não informado'}</div>
-                <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '2px' }}>
-                    📅 {dataHora}
-                </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '8px' }}>
+            {/* Ação */}
+            <div style={{ display: 'flex', gap: '10px' }}>
                 <button 
                     onClick={handleAction}
                     style={{
                         flex: 1,
-                        padding: '10px',
-                        background: '#f3f4f6',
-                        color: '#1a1a2e',
+                        padding: '12px',
+                        background: '#1a1a2e',
+                        color: 'white',
                         border: 'none',
-                        borderRadius: '10px',
-                        fontSize: '0.75rem',
-                        fontWeight: 800,
+                        borderRadius: '12px',
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '6px',
-                        transition: 'background 0.2s'
+                        gap: '8px',
+                        transition: 'all 0.2s',
+                        boxShadow: '0 4px 12px rgba(26,26,46,0.2)'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = '#e5e7eb'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = '#f3f4f6'}
                 >
-                    <Eye size={14} /> Ver Painel
+                    <Eye size={16} /> Ver no Painel
                 </button>
             </div>
         </div>
@@ -102,11 +119,11 @@ export function AgendamentoAlert() {
             top: '20px',
             left: '50%',
             transform: 'translateX(-50%)',
-            zIndex: 99999,
+            zIndex: 999999,
             display: 'flex',
             flexDirection: 'column',
             gap: '12px',
-            maxWidth: '380px',
+            maxWidth: '400px',
             width: 'calc(100% - 40px)',
             pointerEvents: 'none'
         }}>
@@ -121,12 +138,13 @@ export function AgendamentoAlert() {
 
             <style>{`
                 @keyframes slideDown {
-                    from { transform: translateY(-50px); opacity: 0; }
-                    to { transform: translateY(0); opacity: 1; }
+                    from { transform: translate(-50%, -50px); opacity: 0; }
+                    to { transform: translate(-50%, 0); opacity: 1; }
                 }
-                @keyframes fadeOutRight {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100px); opacity: 0; }
+                /* Ajuste da animação de entrada para centralizado */
+                @keyframes slideDown {
+                    0% { transform: translateY(-30px) scale(0.9); opacity: 0; }
+                    100% { transform: translateY(0) scale(1); opacity: 1; }
                 }
             `}</style>
         </div>
