@@ -171,18 +171,21 @@ export function DataGrid({
                                     </td>
                                 </tr>
                             ) : (
-                                data.map((row, idx) => (
-                                    <tr key={row.id ?? row.ID ?? idx} className="hover:bg-slate-50/5 hover-row-dark transition-all duration-200" style={{ borderBottom: '1px solid var(--border-muted)' }}>
-                                        {columns.map((col, ci) => (
-                                            <td
-                                                key={col.label ?? ci}
-                                                style={{ padding: '1rem 1.5rem', textAlign: col.align || 'left' }}
-                                            >
-                                                {col.render ? col.render(row, idx) : row[col.key]}
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))
+                                data.map((row, idx) => {
+                                    if (!row) return null;
+                                    return (
+                                        <tr key={row.id ?? row.ID ?? idx} className="hover:bg-slate-50/5 hover-row-dark transition-all duration-200" style={{ borderBottom: '1px solid var(--border-muted)' }}>
+                                            {columns.map((col, ci) => (
+                                                <td
+                                                    key={col.label ?? ci}
+                                                    style={{ padding: '1rem 1.5rem', textAlign: col.align || 'left' }}
+                                                >
+                                                    {col.render ? col.render(row, idx) : row[col.key]}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>

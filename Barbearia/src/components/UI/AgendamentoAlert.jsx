@@ -110,7 +110,7 @@ export function AgendamentoAlert() {
             width: 'calc(100% - 40px)',
             pointerEvents: 'none'
         }}>
-            {newAgendamentos.map((ag) => (
+            {newAgendamentos.filter(a => a !== null && a !== undefined).map((ag) => (
                 <SingleAlert 
                     key={ag.id || ag.Id || ag.ID || Math.random()} 
                     ag={ag} 

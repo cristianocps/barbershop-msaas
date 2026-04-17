@@ -33,7 +33,7 @@ export function Agendamentos() {
             setError(null);
             const start = (page - 1) * pageSize;
             const res = await AgendamentosService.carregarGrid({ value: searchTerm }, start, pageSize);
-            const list = res?.data || res?.Data || [];
+            const list = (res?.data || res?.Data || []).filter(item => item !== null && item !== undefined);
             const recordsTotal = res?.recordsTotal || res?.RecordsTotal || 0;
             setData(list);
             setTotal(recordsTotal);
@@ -167,20 +167,23 @@ export function Agendamentos() {
     };
 
     // Helpers
-    const getDescricao = (row) => row.descricao || row.Descricao || '–';
+    const getDescricao = (row) => row?.descricao || row?.Descricao || '–';
     const getData = (row) => {
-        const d = row.dtAgendamento || row.DtAgendamento || row.dtagendamento;
+        const d = row?.dtAgendamento || row?.DtAgendamento || row?.dtagendamento;
         if (!d) return '–';
-        return new Date(d).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        try {
+            return new Date(d).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        } catch { return 'Data inválida'; }
     };
-    const getTelefone = (row) => row.telefone || row.Telefone || '–';
+    const getTelefone = (row) => row?.telefone || row?.Telefone || '–';
     const getValorTotal = (row) => {
-        const val = row.valorTotal ?? row.ValorTotal ?? 0;
+        const val = row?.valorTotal ?? row?.ValorTotal ?? 0;
         if (!val || val === 0) return '–';
-        return `R$ ${Number(val).toFixed(2).replace('.', ',')}`;
+        const num = Number(val);
+        return isNaN(num) ? '–' : `R$ ${num.toFixed(2).replace('.', ',')}`;
     };
     const getStatusInfo = (row) => {
-        const st = row.status ?? row.Status;
+        const st = row?.status ?? row?.Status;
         const map = {
             0: { label: 'Pendente',   bg: '#fef9c3', color: '#854d0e' },
             1: { label: 'Agendado',   bg: '#dbeafe', color: '#1d4ed8' },
