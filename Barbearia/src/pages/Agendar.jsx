@@ -538,31 +538,61 @@ function App() {
                           }}
                           style={{ 
                             background: '#fff', 
-                            padding: '1rem', 
-                            borderRadius: '14px', 
+                            padding: '1.25rem', 
+                            borderRadius: '16px', 
                             border: '1px solid #e5e7eb',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                            boxShadow: '0 4px 6px rgba(0,0,0,0.02)',
                             cursor: 'pointer',
                             position: 'relative',
-                            transition: 'all 0.2s ease'
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            overflow: 'hidden'
                           }}
-                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#f6b001'; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e5e7eb'; }}
+                          onMouseEnter={(e) => { 
+                            e.currentTarget.style.borderColor = '#f6b001';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 8px 15px rgba(246, 176, 1, 0.1)';
+                          }}
+                          onMouseLeave={(e) => { 
+                            e.currentTarget.style.borderColor = '#e5e7eb';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.02)';
+                          }}
                         >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', marginBottom: '4px' }}>
-                                {pix.tipo || pix.Tipo}
-                              </div>
-                              <div style={{ fontSize: '1rem', fontFamily: 'monospace', fontWeight: 700, color: '#111827', wordBreak: 'break-all' }}>
-                                {chaveAtiva}
-                              </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', marginBottom: '4px', letterSpacing: '0.05em' }}>
+                              {pix.tipo || pix.Tipo}
                             </div>
-                            <div style={{ color: '#f6b001', padding: '8px', background: 'rgba(246, 176, 1, 0.1)', borderRadius: '10px', marginLeft: '10px' }}>
-                              <Check size={16} />
+                            <div style={{ fontSize: '1.1rem', fontFamily: 'monospace', fontWeight: 800, color: '#1a1a2e', wordBreak: 'break-all' }}>
+                              {chaveAtiva}
+                            </div>
+                            <div style={{ fontSize: '0.7rem', color: '#f6b001', marginTop: '6px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <Check size={12} /> Clique para copiar
                             </div>
                           </div>
-                          <div style={{ fontSize: '0.65rem', color: '#f6b001', marginTop: '6px', fontWeight: 700 }}>Clique para copiar a chave</div>
+                          
+                          {/* Botão de Copiar Explícito e Elegante */}
+                          <div style={{ 
+                            background: 'linear-gradient(135deg, #f6b001, #e09800)',
+                            color: '#1a1a1a',
+                            padding: '10px 16px',
+                            borderRadius: '12px',
+                            fontSize: '0.75rem',
+                            fontWeight: 900,
+                            boxShadow: '0 4px 10px rgba(246, 176, 1, 0.3)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            minWidth: 'fit-content'
+                          }}>
+                            {/* Ícone de check para simbolizar a ação */}
+                            <Check size={14} strokeWidth={3} />
+                            Copiar
+                          </div>
                         </div>
                       );
                     })}
