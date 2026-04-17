@@ -526,22 +526,51 @@ function App() {
                   </div>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                    {chavesPix.map((pix, idx) => (
-                      <div key={idx} style={{ 
-                        background: '#fff', 
-                        padding: '1rem', 
-                        borderRadius: '14px', 
-                        border: '1px solid #e5e7eb',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-                      }}>
-                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', marginBottom: '4px' }}>
-                          {pix.tipo || pix.Tipo}
+                    {chavesPix.map((pix, idx) => {
+                      const chaveAtiva = pix.chave || pix.Chave;
+                      if (!chaveAtiva) return null;
+
+                      return (
+                        <div key={idx} 
+                          onClick={() => {
+                            navigator.clipboard.writeText(chaveAtiva);
+                            toast.success('Chave PIX copiada!');
+                          }}
+                          style={{ 
+                            background: '#fff', 
+                            padding: '1rem', 
+                            borderRadius: '14px', 
+                            border: '1px solid #e5e7eb',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                            cursor: 'pointer',
+                            position: 'relative',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#f6b001'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#e5e7eb'; }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', marginBottom: '4px' }}>
+                                {pix.tipo || pix.Tipo}
+                              </div>
+                              <div style={{ fontSize: '1rem', fontFamily: 'monospace', fontWeight: 700, color: '#111827', wordBreak: 'break-all' }}>
+                                {chaveAtiva}
+                              </div>
+                            </div>
+                            <div style={{ color: '#f6b001', padding: '8px', background: 'rgba(246, 176, 1, 0.1)', borderRadius: '10px', marginLeft: '10px' }}>
+                              <Check size={16} />
+                            </div>
+                          </div>
+                          <div style={{ fontSize: '0.65rem', color: '#f6b001', marginTop: '6px', fontWeight: 700 }}>Clique para copiar a chave</div>
                         </div>
-                        <div style={{ fontSize: '1rem', fontFamily: 'monospace', fontWeight: 700, color: '#111827', wordBreak: 'break-all', userSelect: 'all' }}>
-                          {pix.chave || pix.Chave}
-                        </div>
+                      );
+                    })}
+                    {chavesPix.every(p => !(p.chave || p.Chave)) && (
+                      <div style={{ padding: '1rem', textAlign: 'center', background: '#fff', borderRadius: '14px', border: '1px solid #fee2e2' }}>
+                        <p style={{ fontSize: '0.85rem', color: '#ef4444', fontWeight: 600 }}>Chave PIX não configurada ou vazia.</p>
                       </div>
-                    ))}
+                    )}
                   </div>
 
                   <div className="upload-container">
