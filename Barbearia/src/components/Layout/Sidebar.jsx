@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, CalendarDays, Settings, LogOut, Menu, X, Building2, Scissors, Star, CalendarClock } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarDays, Settings, LogOut, Menu, X, Building2, Scissors, Star, CalendarClock, Landmark } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const PolicyLevels = {
@@ -31,13 +31,12 @@ const navGroups = [
             { path: '/servicos', icon: <Scissors size={18} />, label: 'Serviços', minPolicy: 'profissional' },
         ]
     },
-    // ── Configurações temporariamente oculto ──────────────────
-    // {
-    //     label: 'Sistema',
-    //     items: [
-    //         { path: '/configuracoes', icon: <Settings size={18} />, label: 'Configurações', minPolicy: 'admin' },
-    //     ]
-    // },
+    {
+        label: 'Configurações',
+        items: [
+            { path: '/configuracoes/dados-bancarios', icon: <Landmark size={18} />, label: 'Dados Bancários', minPolicy: 'admin' },
+        ]
+    },
 ];
 
 export function Sidebar() {

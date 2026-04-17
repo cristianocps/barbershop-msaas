@@ -10,7 +10,7 @@ import Agendar from './pages/Agendar';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Usuarios } from './pages/Usuarios';
-import { Configuracoes } from './pages/Configuracoes';
+import { DadosBancarios } from './pages/DadosBancarios';
 import { Agendamentos } from './pages/Agendamentos';
 import { Empresas } from './pages/Empresas';
 import { Clientes } from './pages/Clientes';
@@ -42,7 +42,7 @@ function AppRoutes() {
                 <Route path="horarios" element={<RoleRoute minPolicy="profissional"><Horarios /></RoleRoute>} />
                 <Route path="empresas" element={<RoleRoute minPolicy="profissional"><Empresas /></RoleRoute>} />
                 <Route path="servicos" element={<RoleRoute minPolicy="profissional"><Servicos /></RoleRoute>} />
-                <Route path="configuracoes" element={<RoleRoute minPolicy="admin"><Configuracoes /></RoleRoute>} />
+                <Route path="configuracoes/dados-bancarios" element={<RoleRoute minPolicy="admin"><DadosBancarios /></RoleRoute>} />
             </Route>
 
             {/* Rota Pública - Cliente (Vitrine) */}

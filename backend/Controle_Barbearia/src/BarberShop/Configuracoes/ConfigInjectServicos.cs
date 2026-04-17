@@ -1,16 +1,20 @@
 using BarberShop.Aplicacao.Entidades.Acessos;
 using BarberShop.Aplicacao.Entidades.Agendamentos;
+using BarberShop.Aplicacao.Entidades.Basico;
 using BarberShop.Aplicacao.Entidades.Configuracoes;
 using BarberShop.Dominio.Entidade.DTOs;
 using BarberShop.Dominio.Interfaces.Base;
 using BarberShop.Dominio.Interfaces.Repositorios.Acessos;
 using BarberShop.Dominio.Interfaces.Repositorios.Agendamentos;
+using BarberShop.Dominio.Interfaces.Repositorios.Basico;
 using BarberShop.Dominio.Interfaces.Repositorios.Configuracoes;
 using BarberShop.Dominio.Interfaces.Servicos.Acessos;
 using BarberShop.Dominio.Interfaces.Servicos.Agendamentos;
+using BarberShop.Dominio.Interfaces.Servicos.Basico;
 using BarberShop.Dominio.Interfaces.Servicos.Configuracoes;
 using BarberShop.Repositorio.Repositorio.Acessos;
 using BarberShop.Repositorio.Repositorio.Agendamentos;
+using BarberShop.Repositorio.Repositorio.Basico;
 using BarberShop.Repositorio.Repositorio.Configuracoes;
 using BarberShop.Repositorio.Servicos;
 using System.Diagnostics;
@@ -66,10 +70,14 @@ namespace BarberShop.Configuracoes
             services.AddScoped<IClienteServicos, ClienteServicos>();
             services.AddScoped<IClienteRepositorio, ClienteRepositorio>();
 
-
-            // Clientes
+            // HorarioTrabalho
             services.AddScoped<IHorarioTrabalhoServicos, HorarioTrabalhoServicos>();
             services.AddScoped<IHorarioTrabalhoRepositorio, HorarioTrabalhoRepositorio>();
+
+            // Dados Bancarios
+            services.AddScoped<IDadosBancariosServicos, DadosBancariosServicos>();
+            services.AddScoped<IDadosBancariosRepositorio, DadosBancariosRepositorio>();
+
 
             #endregion
         }
