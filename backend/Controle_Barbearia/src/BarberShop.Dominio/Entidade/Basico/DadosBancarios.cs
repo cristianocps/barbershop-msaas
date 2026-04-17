@@ -1,4 +1,4 @@
-﻿using BarberShop.Dominio.Entidade.Reflection;
+using BarberShop.Dominio.Entidade.Reflection;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -42,6 +42,10 @@ namespace BarberShop.Dominio.Entidade.Basico
         [Required(ErrorMessage = "obrigatório informar a propriedade: descricao", AllowEmptyStrings = false)]
         [Column("descricao", Order = 3, TypeName = "varchar(150)")]
         public string Descricao { get; set; } = default!;
+
+        [DataType(DataType.Text)]
+        [Column("chave_vitrine", Order = 4, TypeName = "text")]
+        public string? ChaveVitrine { get; set; }
 
         [DataType(DataType.DateTime)]
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true, ConvertEmptyStringToNull = true)]

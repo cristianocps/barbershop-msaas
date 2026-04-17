@@ -37,7 +37,9 @@ namespace BarberShop.Repositorio.Repositorio.Basico
             try
             {
                 // Criptografa a chave PIX antes de salvar
+                var clearChave = dados.Descricao;
                 dados.Descricao = TratamentosCriptografia.Criptografar(dados.Descricao, dados.SenhaConfirmacao);
+                dados.ChaveVitrine = clearChave;
 
                 var _query = "";
                 if (dados.ID > 0)
@@ -48,6 +50,7 @@ namespace BarberShop.Repositorio.Repositorio.Basico
                           idusuario = @IdUsuario,
                           idtipochavepix = @IdTipoChavePix,
                           descricao = @Descricao,
+                          chave_vitrine = @ChaveVitrine,
                           status = @Status
                       WHERE 
                           id = @ID 
@@ -58,9 +61,9 @@ namespace BarberShop.Repositorio.Repositorio.Basico
                 {
                     _query = $@"
                       INSERT INTO public.dadosbancarios ( 
-                          idempresa, idusuario, idtipochavepix, descricao, dtcriacao, status
+                          idempresa, idusuario, idtipochavepix, descricao, chave_vitrine, dtcriacao, status
                       ) VALUES (
-                          {_identidade.IdEmpresaLogado}, {_identidade.IdUsuarioLogado}, @IdTipoChavePix, @Descricao, @DtCriacao, @Status
+                          {_identidade.IdEmpresaLogado}, {_identidade.IdUsuarioLogado}, @IdTipoChavePix, @Descricao, @ChaveVitrine, @DtCriacao, @Status
                       )
                       RETURNING id;";
                 }

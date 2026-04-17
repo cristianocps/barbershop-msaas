@@ -224,7 +224,7 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                 var _query = @"
                     SELECT 
                         t.descricao AS Tipo,
-                        d.descricao AS Chave
+                        d.chave_vitrine AS Chave
                     FROM public.dadosbancarios d
                     JOIN public.tipochave t ON t.id = d.idtipochavepix
                     WHERE d.idempresa = @IdEmpresa

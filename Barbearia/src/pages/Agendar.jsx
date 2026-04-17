@@ -508,62 +508,125 @@ function App() {
                 />
               </div>
 
-              {/* Seção de PIX */}
+              {/* Seção de PIX Premium */}
               {chavesPix && chavesPix.length > 0 && (
-                <div className="pix-section mt-6 p-4 rounded-xl border-2 border-dashed border-blue-100 bg-blue-50/30">
-                  <h3 className="text-sm font-bold text-blue-800 mb-3 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                    Pagamento via PIX (Opcional)
-                  </h3>
+                <div className="pix-payment-card" style={{
+                  marginTop: '2rem',
+                  padding: '1.5rem',
+                  borderRadius: '20px',
+                  background: 'rgba(246, 176, 1, 0.03)',
+                  border: '1px solid rgba(246, 176, 1, 0.15)',
+                  animation: 'fadeIn 0.5s ease-out'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f6b001', boxShadow: '0 0 10px #f6b001' }} />
+                    <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1a1a2e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Pagamento via PIX 
+                    </h3>
+                  </div>
                   
-                  <div className="space-y-3 mb-4">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
                     {chavesPix.map((pix, idx) => (
-                      <div key={idx} className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
-                        <div className="text-[10px] uppercase font-bold text-gray-400 mb-1">{pix.tipo || pix.Tipo}</div>
-                        <div className="text-sm font-mono font-bold text-gray-800 break-all select-all cursor-pointer" title="Clique para copiar">
+                      <div key={idx} style={{ 
+                        background: '#fff', 
+                        padding: '1rem', 
+                        borderRadius: '14px', 
+                        border: '1px solid #e5e7eb',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                      }}>
+                        <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#9ca3af', textTransform: 'uppercase', marginBottom: '4px' }}>
+                          {pix.tipo || pix.Tipo}
+                        </div>
+                        <div style={{ fontSize: '1rem', fontFamily: 'monospace', fontWeight: 700, color: '#111827', wordBreak: 'break-all', userSelect: 'all' }}>
                           {pix.chave || pix.Chave}
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="input-group !mb-0">
-                    <label className="input-label !text-blue-800 !text-xs">Anexar Comprovante</label>
-                    <div className="relative">
+                  <div className="upload-container">
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#4b5563', marginBottom: '8px' }}>
+                      Anexar Comprovante (Opcional)
+                    </label>
+                    <div style={{ position: 'relative' }}>
                       <input
                         type="file"
                         accept="image/*"
                         onChange={handleFileChange}
-                        className="hidden"
-                        id="pix-upload"
+                        style={{ display: 'none' }}
+                        id="pix-upload-premium"
                       />
                       <label 
-                        htmlFor="pix-upload"
-                        className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed cursor-pointer transition-all ${comprovanteBase64 ? 'border-green-500 bg-green-50' : 'border-blue-200 hover:border-blue-400 bg-white'}`}
+                        htmlFor="pix-upload-premium"
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '10px',
+                          padding: '2rem 1rem',
+                          borderRadius: '16px',
+                          border: `2px dashed ${comprovanteBase64 ? '#22c55e' : '#cbd5e1'}`,
+                          backgroundColor: comprovanteBase64 ? '#f0fdf4' : '#fff',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          textAlign: 'center'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = '#f6b001';
+                          e.currentTarget.style.backgroundColor = '#fffdf0';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = comprovanteBase64 ? '#22c55e' : '#cbd5e1';
+                          e.currentTarget.style.backgroundColor = comprovanteBase64 ? '#f0fdf4' : '#fff';
+                        }}
                       >
                         {comprovanteBase64 ? (
                           <>
-                            <Check size={18} className="text-green-600" />
-                            <span className="text-sm font-bold text-green-700">Comprovante anexado!</span>
+                            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#22c55e', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)' }}>
+                              <Check size={24} strokeWidth={3} />
+                            </div>
+                            <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#166534' }}>Comprovante Anexado com Sucesso!</span>
+                            <span style={{ fontSize: '0.75rem', color: '#22c55e' }}>Clique para alterar se necessário</span>
                           </>
                         ) : (
                           <>
-                            <Scissors size={18} className="text-blue-600" />
-                            <span className="text-sm font-medium text-blue-600">Escolher foto do comprovante</span>
+                            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#f3f4f6', color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Scissors size={24} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: '#374151' }}>Escolher foto do comprovante</span>
+                              <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Formatos aceitos: JPG, PNG</span>
+                            </div>
                           </>
                         )}
                       </label>
+                      
                       {comprovanteBase64 && (
                         <button 
-                          onClick={() => setComprovanteBase64(null)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-lg"
+                          onClick={(e) => { e.preventDefault(); setComprovanteBase64(null); }}
+                          style={{
+                            position: 'absolute',
+                            top: '-10px',
+                            right: '-10px',
+                            background: '#ef4444',
+                            color: '#fff',
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '2px solid #fff',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                            cursor: 'pointer'
+                          }}
                         >
-                          <XCircle size={14} />
+                          <Settings size={12} />
                         </button>
                       )}
                     </div>
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-2 italic text-center">O envio do comprovante agiliza sua confirmação.</p>
                 </div>
               )}
             </div>
