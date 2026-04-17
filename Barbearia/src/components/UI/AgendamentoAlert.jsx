@@ -1,13 +1,7 @@
 import React from 'react';
-import { Bell, X, Check, Eye } from 'lucide-react';
+import { Bell, X, Eye } from 'lucide-react';
 import { useAgendamentoAlert } from '../../hooks/useAgendamentoAlert';
 import { useNavigate } from 'react-router-dom';
-
-export function AgendamentoAlert() {
-    const { newAgendamentos, removeAlert } = useAgendamentoAlert();
-    const navigate = useNavigate();
-
-    if (newAgendamentos.length === 0) return null;
 
 function SingleAlert({ ag, removeAlert, navigate }) {
     React.useEffect(() => {
@@ -22,8 +16,8 @@ function SingleAlert({ ag, removeAlert, navigate }) {
         navigate('/agendamentos');
     };
 
-    const dataHora = (ag.dtAgendamento || ag.DtAgendamento) 
-        ? new Date(ag.dtAgendamento || ag.DtAgendamento).toLocaleString('pt-BR')
+    const dataHora = (ag?.dtAgendamento || ag?.DtAgendamento) 
+        ? new Date(ag?.dtAgendamento || ag?.DtAgendamento).toLocaleString('pt-BR')
         : 'Horário não informado';
 
     return (
@@ -60,8 +54,8 @@ function SingleAlert({ ag, removeAlert, navigate }) {
             </div>
 
             <div onClick={handleAction} style={{ marginBottom: '12px', cursor: 'pointer' }}>
-                <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#111827' }}>{ag.nomeCliente || ag.NomeCliente || ag.descricao || 'Cliente'}</div>
-                <div style={{ fontSize: '0.8rem', color: '#6b7280' }}> Serviço: {ag.servico || ag.Servico || 'Não informado'}</div>
+                <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#111827' }}>{ag?.nomeCliente || ag?.NomeCliente || ag?.descricao || 'Cliente'}</div>
+                <div style={{ fontSize: '0.8rem', color: '#6b7280' }}> Serviço: {ag?.servico || ag?.Servico || 'Não informado'}</div>
                 <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '2px' }}>
                     📅 {dataHora}
                 </div>
