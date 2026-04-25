@@ -1,3 +1,5 @@
+using BarberShop.Dominio.Entidade.Reflection.Texto;
+using BarberShop.Infraestrutura.padronizar;
 using BarberShop.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -5,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using static BarberShop.Dominio.Enuns.IResponseController;
 
 namespace BarberShop.Controllers
 {
@@ -26,58 +29,75 @@ namespace BarberShop.Controllers
         [HttpPost("registrar")]
         public async Task<IActionResult> Registrar([FromBody] RegistroModel model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var user = new IdentityUser { UserName = model.Email, Email = model.Email, EmailConfirmed = true };
-            var result = await _userManager.CreateAsync(user, model.Password);
-
-            if (result.Succeeded)
+            try
             {
-                var token = await GenerateJwtToken(user);
-                return Ok(new 
-                { 
-                    Token = token, 
-                    Expiration = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["JwtSettings:ExpirationInMinutes"]!)) 
-                });
+
+                if (!ModelState.IsValid) return BadRequest(ModelState);
+
+                var user = new IdentityUser { UserName = model.Email, Email = model.Email, EmailConfirmed = true };
+                var result = await _userManager.CreateAsync(user, model.Password);
+
+                if (result.Succeeded)
+                {
+                    var token = await GenerateJwtToken(user);
+                    return Ok(new
+                    {
+                        Token = token,
+                        Expiration = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["JwtSettings:ExpirationInMinutes"]!))
+                    });
+                }
+
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description.Traduzir());
+                }
+                return BadRequest(ModelState);
+            }
+            catch (Exception ex)
+            {
+                throw new TratamentoExcecao(ex.Message.Traduzir());
             }
 
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-            return BadRequest(ModelState);
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
+            try
             {
-                return Unauthorized(new { Message = "Usuário não encontrado." });
+                if (!ModelState.IsValid) return BadRequest(ModelState);
+
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null)
+                {
+                    return Unauthorized(new { Message = "Usuário não encontrado." });
+                }
+
+                var result = await _userManager.CheckPasswordAsync(user, model.Password);
+
+                if (result)
+                {
+                    var token = await GenerateJwtToken(user);
+                    return Ok(new
+                    {
+                        Token = token,
+                        Expiration = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["JwtSettings:ExpirationInMinutes"]!))
+                    });
+                }
+
+                // Se falhou, vamos verificar se é bloqueio ou senha errada
+                if (await _userManager.IsLockedOutAsync(user))
+                {
+                    return Unauthorized(new { Message = "Conta bloqueada temporariamente." });
+                } 
+
+                return Unauthorized(new { Message = "Senha inválida." });
             }
-
-            var result = await _userManager.CheckPasswordAsync(user, model.Password);
-
-            if (result)
+            catch (Exception ex)
             {
-                var token = await GenerateJwtToken(user);
-                return Ok(new 
-                { 
-                    Token = token, 
-                    Expiration = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["JwtSettings:ExpirationInMinutes"]!)) 
-                });
+                throw new TratamentoExcecao(ex.Message.Traduzir());
             }
-
-            // Se falhou, vamos verificar se é bloqueio ou senha errada
-            if (await _userManager.IsLockedOutAsync(user))
-            {
-                return Unauthorized(new { Message = "Conta bloqueada temporariamente." });
-            }
-
-            return Unauthorized(new { Message = "Senha inválida." });
+           
         }
 
         [HttpPost("logout")]

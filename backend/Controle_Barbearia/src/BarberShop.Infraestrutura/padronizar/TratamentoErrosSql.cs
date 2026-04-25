@@ -130,7 +130,27 @@ namespace BarberShop.Infraestrutura.padronizar
 
             if (_erroMensagem.Contains("make sure that the name is entered correctly."))
                 return "Confira se o nome informado para o procedimento, base de dados or function está escrito de forma correta";
+            // ---> ADICIONE AQUI <---
+            if (_erroMensagem.Contains("is already taken"))
+            {
+                if (_erroMensagem.Contains("username"))
+                {
+                    var usuario = _erroMensagem.Replace("username", "").Replace("is already taken.", "").Replace("is already taken", "").Replace("'", "").Trim();
+                    return $"O nome de usuário '{usuario}' já está em uso.";
+                }
 
+                if (_erroMensagem.Contains("email"))
+                {
+                    var email = _erroMensagem.Replace("email", "").Replace("is already taken.", "").Replace("is already taken", "").Replace("'", "").Trim();
+                    return $"O e-mail '{email}' já está em uso.";
+                }
+
+                return "Este registro já está em uso.";
+            }
+            // -----------------------
+
+            if (_erroMensagem.Contains("timeout waiting for response to originate"))
+                return "Tempo limite para atender a chamada expirou";
 
             return erroMensagem ?? "";// "Erro ao tentar completar a operação: Avise ao administrador do sistema";
         }
