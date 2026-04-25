@@ -116,8 +116,21 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const registrar = async (email, password) => {
+        try {
+            const data = await AuthService.registrar(email, password);
+            localStorage.setItem('token', data.token);
+            setToken(data.token);
+            toast.success('Cadastro realizado e login concluído!');
+            return true;
+        } catch (error) {
+            toast.error(error.message || 'Erro ao realizar cadastro.');
+            return false;
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, empresa, token, loading, login, logout, refreshEmpresa, isAuthenticated: !!token }}>
+        <AuthContext.Provider value={{ user, empresa, token, loading, login, logout, registrar, refreshEmpresa, isAuthenticated: !!token }}>
             {children}
         </AuthContext.Provider>
     );

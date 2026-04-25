@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { Scissors, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 export function Login() {
-    const { login } = useAuth();
+    const { login, registrar } = useAuth();
     const navigate = useNavigate();
+    const [isRegister, setIsRegister] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPass, setShowPass] = useState(false);
     const [focused, setFocused] = useState('');
@@ -15,9 +17,22 @@ export function Login() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        const success = await login(email, password);
-        setLoading(false);
-        if (success) navigate('/');
+
+        if (isRegister) {
+            if (password !== confirmPassword) {
+                // O toast erro é tratado no registrar do contexto, mas aqui validamos localmente se as senhas batem
+                alert("As senhas não coincidem!"); // Poderia usar toast.error se importasse
+                setLoading(false);
+                return;
+            }
+            const success = await registrar(email, password);
+            setLoading(false);
+            if (success) navigate('/');
+        } else {
+            const success = await login(email, password);
+            setLoading(false);
+            if (success) navigate('/');
+        }
     };
 
     return (
@@ -409,8 +424,8 @@ export function Login() {
                 {/* ── Painel Direito ── */}
                 <div className="login-right">
                     <div className="login-form-header">
-                        <h2>Bem-vindo de volta 👋</h2>
-                        <p>Faça login para acessar o painel de gestão</p>
+                        <h2>{isRegister ? 'Crie sua conta ✂' : 'Bem-vindo de volta 👋'}</h2>
+                        <p>{isRegister ? 'Cadastre sua barbearia no sistema profissional' : 'Faça login para acessar o painel de gestão'}</p>
                     </div>
 
                     <form onSubmit={handleSubmit} style={{ width: '100%' }}>
@@ -445,7 +460,7 @@ export function Login() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     onFocus={() => setFocused('pass')}
                                     onBlur={() => setFocused('')}
-                                    required autoComplete="current-password"
+                                    required autoComplete={isRegister ? "new-password" : "current-password"}
                                     style={{ paddingRight: '2.65rem' }}
                                 />
                                 <button
@@ -459,16 +474,77 @@ export function Login() {
                             </div>
                         </div>
 
+                        {isRegister && (
+                            <div className="login-field" style={{ animation: 'fadeIn 0.4s ease-out' }}>
+                                <label>Confirmar Senha</label>
+                                <div className={`login-input-wrap ${focused === 'confirm' ? 'focused' : ''}`}>
+                                    <Lock className="login-input-icon" size={15} />
+                                    <input
+                                        id="login-confirm-password"
+                                        type={showPass ? 'text' : 'password'}
+                                        className="login-input"
+                                        placeholder="••••••••"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        onFocus={() => setFocused('confirm')}
+                                        onBlur={() => setFocused('')}
+                                        required autoComplete="new-password"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
                         <button id="login-submit" type="submit" className="login-submit" disabled={loading}>
                             {loading
-                                ? <><span className="login-submit-spinner" /> Entrando...</>
-                                : <>Entrar no Painel <ArrowRight size={17} /></>
+                                ? <><span className="login-submit-spinner" /> {isRegister ? 'Cadastrando...' : 'Entrando...'}</>
+                                : <>{isRegister ? 'Finalizar Cadastro' : 'Entrar no Painel'} <ArrowRight size={17} /></>
                             }
                         </button>
+
+                        <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.9rem' }}>
+                            {isRegister ? (
+                                <p style={{ color: '#666' }}>
+                                    Já tem uma conta?{' '}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsRegister(false)}
+                                        style={{ background: 'none', border: 'none', color: '#d4af37', fontWeight: 'bold', cursor: 'pointer', padding: 0 }}
+                                    >
+                                        Fazer Login
+                                    </button>
+                                </p>
+                            ) : (
+                                <p style={{ color: '#666' }}>
+                                    Ainda não tem cadastro?{' '}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsRegister(true)}
+                                        style={{ background: 'none', border: 'none', color: '#d4af37', fontWeight: 'bold', cursor: 'pointer', padding: 0 }}
+                                    >
+                                        Cadastre-se aqui
+                                    </button>
+                                </p>
+                            )}
+                        </div>
                     </form>
 
                     {/* Link de agendamento público desabilitado temporariamente
-                    <a href="/agendar" id="link-agendamento-publico">
+                    <a 
+                        href="/agendar" 
+                        id="link-agendamento-publico"
+                        style={{ 
+                            display: 'block', 
+                            textAlign: 'center', 
+                            marginTop: '2rem', 
+                            color: '#94a3b8', 
+                            textDecoration: 'none', 
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            transition: 'color 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.target.style.color = '#d4af37'}
+                        onMouseLeave={(e) => e.target.style.color = '#94a3b8'}
+                    >
                         Ir para Agendamento Público
                     </a>
                     */}
