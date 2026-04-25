@@ -116,9 +116,9 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const registrar = async (email, password) => {
+    const registrar = async (email, password, confirmPassword) => {
         try {
-            const data = await AuthService.registrar(email, password);
+            const data = await AuthService.registrar(email, password, confirmPassword);
             localStorage.setItem('token', data.token);
             setToken(data.token);
             toast.success('Cadastro realizado e login concluído!');

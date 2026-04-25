@@ -25,7 +25,7 @@ export function Login() {
                 setLoading(false);
                 return;
             }
-            const success = await registrar(email, password);
+            const success = await registrar(email, password, confirmPassword);
             setLoading(false);
             if (success) navigate('/');
         } else {
