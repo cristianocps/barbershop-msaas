@@ -40,23 +40,6 @@ async function client(endpoint, { body, ...customConfig } = {}) {
         const text = await response.text();
         data = text ? JSON.parse(text) : {};
 
-        if (!response.ok) {
-            // Tenta capturar a mensagem mais específica possível
-            let erroMessage = data?.message || data?.title;
-
-            // Se houver erros de validação (ModelState), extrai a primeira mensagem
-            if (data?.errors) {
-                const errorEntries = Object.entries(data.errors);
-                if (errorEntries.length > 0) {
-                    const [key, messages] = errorEntries[0];
-                    if (Array.isArray(messages) && messages.length > 0) {
-                        erroMessage = messages[0];
-                    }
-                }
-            }
-
-            return Promise.reject(new Error(erroMessage || 'Ocorreu um erro na requisição.'));
-        }
 
         return data; // Retorna o JSON manipulado
     } catch (err) {

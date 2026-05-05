@@ -1,4 +1,6 @@
+using BarberShop.Dominio.Entidade.Acessos;
 using BarberShop.Dominio.Entidade.Reflection.Texto;
+using BarberShop.Dominio.Interfaces.Servicos.Acessos;
 using BarberShop.Infraestrutura.padronizar;
 using BarberShop.Models;
 using Microsoft.AspNetCore.Identity;
@@ -18,12 +20,21 @@ namespace BarberShop.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IConfiguration _configuration;
+        private readonly IUsuarioServicos _usuarioServicos;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public AcessosController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration configuration)
+        public AcessosController(
+            UserManager<IdentityUser> userManager, 
+            SignInManager<IdentityUser> signInManager, 
+            IConfiguration configuration,
+            IUsuarioServicos usuarioServicos,
+            RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
+            _usuarioServicos = usuarioServicos;
+            _roleManager = roleManager;
         }
 
         [HttpPost("registrar")]
@@ -39,6 +50,32 @@ namespace BarberShop.Controllers
 
                 if (result.Succeeded)
                 {
+                    // Atribui o perfil básico (Consulta)
+                    var role = await _roleManager.FindByNameAsync("Consulta");
+                    if (role != null)
+                    {
+                        await _userManager.AddToRoleAsync(user, role.Name!);
+                    }
+
+                    // Cria o registro na tabela de negócios (Usuario) para persistir dados básicos
+                    var usuarioNegocio = new Usuario
+                    {
+                        ID = 0,
+                        Status = 1,
+                        Cidade = "Não informada",
+                        Descricao = "Usuário registrado pelo portal",
+                        Documento = "00000000000",
+                        DtCriacao = DateTime.Now,
+                        Email = model.Email,
+                        Logon = model.Email,
+                        Telefone = "00000000000",
+                        IdEmpresa = 1, // Empresa padrão para novos registros
+                        IdClains = user.Id,
+                        Senha = model.Password
+                    };
+
+                    await _usuarioServicos.AlterarUsuarios(usuarioNegocio);
+
                     var token = await GenerateJwtToken(user);
                     return Ok(new
                     {
@@ -55,7 +92,7 @@ namespace BarberShop.Controllers
             }
             catch (Exception ex)
             {
-                throw new TratamentoExcecao(ex.Message.Traduzir());
+                return BadRequest(new { mensagem = ex.Message.Traduzir() });
             }
 
         }
@@ -95,7 +132,7 @@ namespace BarberShop.Controllers
             }
             catch (Exception ex)
             {
-                throw new TratamentoExcecao(ex.Message.Traduzir());
+                return BadRequest(new { mensagem = ex.Message.Traduzir() });
             }
            
         }
