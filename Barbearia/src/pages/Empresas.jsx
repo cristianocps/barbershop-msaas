@@ -27,7 +27,7 @@ const ProfessionalWelcomeCard = ({ onAction }) => (
                 <Building2 size={28} />
             </div>
             <div style={{ flex: '1 1 300px' }}>
-                <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', fontWeight: 700 }}>Bem-vindo ao seu novo painel!</h3>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', fontWeight: 800, color: '#fff' }}>Bem-vindo ao seu novo painel!</h3>
                 <p style={{ margin: '0 0 16px 0', color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem', lineHeight: '1.5' }}>
                     Você ainda está usando nossa unidade de demonstração. Para começar a gerenciar sua própria barbearia e receber agendamentos, você precisa cadastrar sua empresa real.
                 </p>
@@ -35,7 +35,7 @@ const ProfessionalWelcomeCard = ({ onAction }) => (
                     onClick={onAction}
                     style={{
                         background: '#f6b001',
-                        color: '#1a1a2e',
+                        color: '#fff',
                         border: 'none',
                         padding: '10px 20px',
                         borderRadius: '10px',

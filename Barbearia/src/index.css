@@ -482,13 +482,10 @@ p {
 
 .date-card.selected .date-day,
 .date-card.selected .date-weekday {
-  color: #1a1a1a;
+  color: #fff;
 }
 
 .date-weekday {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
   color: var(--text-muted);
   letter-spacing: 0.04em;
 }

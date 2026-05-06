@@ -73,7 +73,7 @@ const css = `
   padding: 0.7rem 1.25rem;
   border-radius: 12px;
   background: linear-gradient(135deg, #f6b001, #e09800);
-  color: #1a1a1a;
+  color: #fff;
   font-weight: 800;
   font-size: 0.875rem;
   border: none;
@@ -152,7 +152,7 @@ export function PageHeader({ icon, title, subtitle, onNew, newLabel = 'Novo' }) 
             <div className="page-hdr">
                 <div className="page-hdr-info">
                     <div className="page-hdr-icon">
-                        {React.cloneElement(icon, { size: 20, color: '#1a1a1a' })}
+                        {React.cloneElement(icon, { size: 20, color: '#fff' })}
                     </div>
                     <div>
                         <h1 className="page-hdr-title">{title}</h1>
