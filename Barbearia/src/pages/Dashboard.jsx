@@ -217,14 +217,14 @@ export function Dashboard() {
     }, []);
 
     const stats = [
-        { label: 'Agendamentos', value: counts.agendamentos, icon: <CalendarDays size={20} />, color: '#3b82f6', link: '/agendamentos', minPolicy: 'consulta' },
+        { label: 'Agendamentos', value: counts.agendamentos, icon: <CalendarDays size={20} />, color: '#3b82f6', link: '/agendamentos', minPolicy: 'usuario' },
         { label: 'Usuários', value: counts.usuarios, icon: <Users size={20} />, color: '#8b5cf6', link: '/usuarios', minPolicy: 'admin' },
         { label: 'Serviços', value: counts.servicos, icon: <Scissors size={20} />, color: '#f6b001', link: '/servicos', minPolicy: 'profissional' },
         { label: 'Barbearias', value: counts.empresas, icon: <Building2 size={20} />, color: '#ef4444', link: '/empresas', minPolicy: 'profissional' },
     ].filter(s => userMaxPolicy >= (PolicyLevels[s.minPolicy] || 0));
 
     const quickLinks = [
-        { label: 'Agendamentos', icon: <CalendarDays size={18} />, color: '#3b82f6', to: '/agendamentos', minPolicy: 'consulta' },
+        { label: 'Agendamentos', icon: <CalendarDays size={18} />, color: '#3b82f6', to: '/agendamentos', minPolicy: 'usuario' },
         { label: 'Usuários', icon: <Users size={18} />, color: '#8b5cf6', to: '/usuarios', minPolicy: 'admin' },
         { label: 'Serviços', icon: <Scissors size={18} />, color: '#f6b001', to: '/servicos', minPolicy: 'profissional' },
         { label: 'Barbearias', icon: <Building2 size={18} />, color: '#ef4444', to: '/empresas', minPolicy: 'profissional' },
@@ -286,7 +286,8 @@ export function Dashboard() {
                 <div className="dash-bottom-grid">
 
                     {/* Agendamentos Recentes */}
-                    <div className="panel-card">
+                    {userMaxPolicy >= 2 && (
+                        <div className="panel-card">
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.1rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'linear-gradient(135deg,#1a1a2e,#0f3460)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -329,7 +330,8 @@ export function Dashboard() {
                                 ))}
                             </div>
                         )}
-                    </div>
+                        </div>
+                    )}
 
                     {/* Acesso Rápido */}
                     <div className="panel-card">

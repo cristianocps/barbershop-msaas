@@ -16,14 +16,14 @@ const navGroups = [
     {
         label: 'Principal',
         items: [
-            { path: '/', icon: <LayoutDashboard size={18} />, label: 'Dashboard', exact: true },
-            { path: '/agendamentos', icon: <CalendarDays size={18} />, label: 'Agendamentos' },
+            { path: '/', icon: <LayoutDashboard size={18} />, label: 'Dashboard', exact: true, minPolicy: 'usuario' },
+            { path: '/agendamentos', icon: <CalendarDays size={18} />, label: 'Agendamentos', minPolicy: 'usuario' },
         ]
     },
     {
         label: 'Cadastros',
         items: [
-            { path: '/clientes', icon: <Users size={18} />, label: 'Clientes', minPolicy: 'consulta' },
+            { path: '/clientes', icon: <Users size={18} />, label: 'Clientes', minPolicy: 'usuario' },
             { path: '/usuarios', icon: <Users size={18} />, label: 'Usuários', minPolicy: 'admin' },
             { path: '/profissionais', icon: <Star size={18} />, label: 'Profissionais', minPolicy: 'profissional' },
             { path: '/horarios', icon: <CalendarClock size={18} />, label: 'Horários', minPolicy: 'profissional' },
