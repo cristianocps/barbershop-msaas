@@ -212,7 +212,7 @@ export function Empresas() {
                 title="Barbearias"
                 subtitle="Gerencie as unidades da rede"
                 newLabel="Nova Empresa"
-                onNew={(user?.userMaxPolicy >= 4) ? openNew : undefined}
+                onNew={(user?.userMaxPolicy >= 3) ? openNew : undefined}
             />
             <PageSearch
                 value={searchTerm}

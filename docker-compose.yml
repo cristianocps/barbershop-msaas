@@ -14,8 +14,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qwas7845}
       POSTGRES_DB: ${POSTGRES_DB:-barbershop_prod_db}
-    ports:
-      - "5440:5432"          # porta 5440 exposta no servidor (igual ao appsettings)
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -34,8 +33,7 @@ services:
     image: redis:7-alpine
     container_name: redis_barbershop
     restart: unless-stopped
-    ports:
-      - "6379:6379"
+
     volumes:
       - redis_data:/data
     networks:
