@@ -9,6 +9,53 @@ import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useConfirm } from '../components/ui/ConfirmModal';
 
+const ProfessionalWelcomeCard = ({ onAction }) => (
+    <div style={{
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+        borderRadius: '16px',
+        padding: '24px',
+        marginBottom: '24px',
+        color: '#fff',
+        boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+        position: 'relative',
+        overflow: 'hidden',
+        border: '1px solid rgba(255,255,255,0.1)'
+    }}>
+        <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '120px', height: '120px', background: 'rgba(246, 176, 1, 0.1)', borderRadius: '50%' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', position: 'relative', zIndex: 1, flexWrap: 'wrap' }}>
+            <div style={{ background: '#f6b001', padding: '12px', borderRadius: '12px', color: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Building2 size={28} />
+            </div>
+            <div style={{ flex: '1 1 300px' }}>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', fontWeight: 700 }}>Bem-vindo ao seu novo painel!</h3>
+                <p style={{ margin: '0 0 16px 0', color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                    Você ainda está usando nossa unidade de demonstração. Para começar a gerenciar sua própria barbearia e receber agendamentos, você precisa cadastrar sua empresa real.
+                </p>
+                <button 
+                    onClick={onAction}
+                    style={{
+                        background: '#f6b001',
+                        color: '#1a1a2e',
+                        border: 'none',
+                        padding: '10px 20px',
+                        borderRadius: '10px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 4px 12px rgba(246, 176, 1, 0.3)',
+                        fontSize: '0.9rem'
+                    }}
+                >
+                    Cadastrar minha Barbearia <ExternalLink size={16} />
+                </button>
+            </div>
+        </div>
+    </div>
+);
+
 export function Empresas() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -18,7 +65,7 @@ export function Empresas() {
     const [total, setTotal] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
     const toast = useToast();
-    const { user, refreshEmpresa } = useAuth();
+    const { user, refreshEmpresa, empresa } = useAuth();
     const canInativar = (user?.userMaxPolicy ?? 0) >= 4;
     const { confirmModal, askConfirm } = useConfirm();
 
@@ -212,8 +259,11 @@ export function Empresas() {
                 title="Barbearias"
                 subtitle="Gerencie as unidades da rede"
                 newLabel="Nova Empresa"
-                onNew={(user?.userMaxPolicy >= 3) ? openNew : undefined}
+                onNew={((user?.userMaxPolicy === 3 && empresa?.id === 1) || (user?.userMaxPolicy >= 4)) ? openNew : undefined}
             />
+            {(user?.userMaxPolicy === 3 && empresa?.id === 1) && (
+                <ProfessionalWelcomeCard onAction={openNew} />
+            )}
             <PageSearch
                 value={searchTerm}
                 onChange={setSearchTerm}

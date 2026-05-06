@@ -67,6 +67,24 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
 
                 var _result = await _dbConnectionFactory.QuerySingleOrDefaultAsync<long>(_query, dados);
 
+                // Se for um novo cadastro, vincula o usuário criador à nova empresa automaticamente
+                // ✅ Aplicado apenas se o usuário estiver na empresa 'Teste' (ID 1) e for do perfil 'Profissional'
+                if (dados.ID == 0 && _result > 0 && (_identidade.IdUsuarioLogado ?? 0) > 0)
+                {
+                    var _updateUserQuery = $@"
+                        UPDATE public.usuarios 
+                        SET idempresa = {_result} 
+                        WHERE id = {_identidade.IdUsuarioLogado} 
+                          AND idempresa = 1 
+                          AND idclains IN (
+                              SELECT aur.""UserId"" 
+                              FROM ""AspNetUserRoles"" aur 
+                              JOIN ""AspNetRoles"" ar ON ar.""Id"" = aur.""RoleId"" 
+                              WHERE ar.""NormalizedName"" = 'PROFISSIONAL'
+                          )";
+                    await _dbConnectionFactory.ExecuteAsync(_updateUserQuery, null).ConfigureAwait(false);
+                }
+
                 return await Task.FromResult(_result).ConfigureAwait(false);
             }
             catch (Exception ex)
