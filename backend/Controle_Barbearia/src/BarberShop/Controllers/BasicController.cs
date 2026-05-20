@@ -89,14 +89,23 @@ namespace BarberShop.Controllers
                     {
                         connection.Open();
 
-                        var _query = "SELECT ret_id, ret_idempresa FROM fn_obter_credenciais(@Email)";
+                        const string query = """
+                            SELECT u.id, COALESCE(u.idempresa, 0)
+                            FROM public.usuarios u
+                            WHERE LOWER(TRIM(u.email)) = LOWER(TRIM(@Email))
+                            LIMIT 1
+                            """;
 
-                        using (var command = new NpgsqlCommand(_query, connection))
+                        using (var command = new NpgsqlCommand(query, connection))
                         {
                             command.Parameters.AddWithValue("Email", emailUsuario);
                             using (var reader = command.ExecuteReader())
                             {
-                                if (reader.Read()) { idUsuarioLogado = reader.GetInt64(0); idEmpresaLogado = reader.GetInt64(1);}
+                                if (reader.Read())
+                                {
+                                    idUsuarioLogado = reader.GetInt64(0);
+                                    idEmpresaLogado = reader.GetInt64(1);
+                                }
                             }
                         }
                     }

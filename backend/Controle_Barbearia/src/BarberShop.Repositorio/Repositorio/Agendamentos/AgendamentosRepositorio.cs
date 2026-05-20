@@ -34,6 +34,8 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
         {
             try
             {
+                dados.IdCliente = await ResolverIdClienteAsync(dados).ConfigureAwait(false);
+
                 var _queryPai = "";
                 long _result = 0;
 
@@ -97,6 +99,8 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                         item.IdAgendamento = _result;
                         await _dbConnectionFactory.ExecuteAsync(_queryItens, item);
                     }
+
+                    await AtualizarDuracaoAgendamentoAsync(_result).ConfigureAwait(false);
                 }
 
                 return await Task.FromResult(_result).ConfigureAwait(false);
@@ -105,6 +109,84 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
             {
                 throw new TratamentoExcecao($"Erro ao salvar o agendamento: {ex.Message.Traduzir()}");
             }
+        }
+
+        private async Task<long> ResolverIdClienteAsync(Agendamento dados)
+        {
+            if (dados.IdCliente > 0)
+                return dados.IdCliente;
+
+            var nome = (dados.Descricao ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(nome))
+                throw new TratamentoExcecao("Informe o nome do cliente.");
+
+            var telefone = string.IsNullOrWhiteSpace(dados.Telefone)
+                ? ""
+                : dados.Telefone.ApenasNumeros();
+            var cpf = string.IsNullOrWhiteSpace(dados.Cpf)
+                ? ""
+                : dados.Cpf.ApenasNumeros();
+
+            var findSql = $@"
+                SELECT id FROM public.clientes
+                WHERE idempresa = {_identidade.IdEmpresaLogado}
+                  AND status = 1
+                  AND (
+                      (@Telefone <> '' AND telefone = @Telefone)
+                      OR (@Cpf <> '' AND regexp_replace(COALESCE(cpf, ''), '\D', '', 'g') = @Cpf)
+                      OR (@Telefone = '' AND @Cpf = '' AND descricao ILIKE @Nome)
+                  )
+                ORDER BY id DESC
+                LIMIT 1;";
+
+            var existente = await _dbConnectionFactory.QuerySingleOrDefaultAsync<long>(findSql, new
+            {
+                Nome = nome,
+                Telefone = telefone,
+                Cpf = cpf
+            }).ConfigureAwait(false);
+
+            if (existente > 0)
+                return existente;
+
+            var insertSql = $@"
+                INSERT INTO public.clientes (idempresa, idusuario, descricao, telefone, cpf, dtcriacao, status)
+                VALUES (
+                    {_identidade.IdEmpresaLogado},
+                    {_identidade.IdUsuarioLogado},
+                    @Nome,
+                    @Telefone,
+                    @CpfFmt,
+                    NOW(),
+                    1
+                )
+                RETURNING id;";
+
+            var cpfFmt = string.IsNullOrWhiteSpace(cpf) ? null : cpf;
+            var telFmt = string.IsNullOrWhiteSpace(telefone) ? null : telefone;
+
+            return await _dbConnectionFactory.QuerySingleOrDefaultAsync<long>(insertSql, new
+            {
+                Nome = nome.VarcharToSQL(),
+                Telefone = telFmt,
+                CpfFmt = cpfFmt
+            }).ConfigureAwait(false);
+        }
+
+        private async Task AtualizarDuracaoAgendamentoAsync(long idAgendamento)
+        {
+            var sql = $@"
+                UPDATE public.agendamentos a
+                SET duracao_minutos = COALESCE((
+                    SELECT NULLIF(SUM(s.duracao_minutos), 0)
+                    FROM public.agendamento_itens ai
+                    JOIN public.servicos s ON s.id = ai.idservico
+                    WHERE ai.idagendamento = @IdAgendamento
+                ), 30)
+                WHERE a.id = @IdAgendamento
+                  AND a.idempresa = {_identidade.IdEmpresaLogado};";
+
+            await _dbConnectionFactory.ExecuteAsync(sql, new { IdAgendamento = idAgendamento }).ConfigureAwait(false);
         }
 
         public async Task<long> AlterarStatusAgendamento(long id, int status)
@@ -232,20 +314,22 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
             {
                 var _queryPai = $@"
                     SELECT 
-                        id              AS ID,
-                        idempresa       AS IdEmpresa,
-                        idusuario       AS IdUsuario,
-                        idcliente       AS IdCliente,
-                        idprofissional  AS IdProfissional,
-                        descricao       AS Descricao,
-                        telefone        AS Telefone,
-                        observacao      AS Observacao,
-                        dtagendamento   AS DtAgendamento,
-                        dtcriacao       AS DtCriacao,
-                        status          AS Status
-                    FROM public.agendamentos
-                    WHERE id = @IdItem
-                      AND idempresa = {_identidade.IdEmpresaLogado}
+                        a.id              AS ID,
+                        a.idempresa       AS IdEmpresa,
+                        a.idusuario       AS IdUsuario,
+                        a.idcliente       AS IdCliente,
+                        a.idprofissional  AS IdProfissional,
+                        a.descricao       AS Descricao,
+                        a.telefone        AS Telefone,
+                        c.cpf             AS Cpf,
+                        a.observacao      AS Observacao,
+                        a.dtagendamento   AS DtAgendamento,
+                        a.dtcriacao       AS DtCriacao,
+                        a.status          AS Status
+                    FROM public.agendamentos a
+                    LEFT JOIN public.clientes c ON c.id = a.idcliente
+                    WHERE a.id = @IdItem
+                      AND a.idempresa = {_identidade.IdEmpresaLogado}
                 ";
 
                 var _result = await _dbConnectionFactory.QuerySingleOrDefaultAsync<Agendamento>(_queryPai, new { IdItem = idItem });
@@ -256,15 +340,17 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                 // Busca os serviços do agendamento (itens)
                 var _queryItens = $@"
                     SELECT 
-                        id              AS ID,
-                        idempresa       AS IdEmpresa,
-                        idagendamento   AS IdAgendamento,
-                        idservico       AS IdServico,
-                        valor_cobrado   AS ValorCobrado,
-                        status          AS Status
-                    FROM public.agendamento_itens
-                    WHERE idagendamento = @IdItem
-                      AND idempresa = {_identidade.IdEmpresaLogado}
+                        ai.id              AS ID,
+                        ai.idempresa       AS IdEmpresa,
+                        ai.idagendamento   AS IdAgendamento,
+                        ai.idservico       AS IdServico,
+                        ai.valor_cobrado   AS ValorCobrado,
+                        ai.status          AS Status,
+                        COALESCE(s.duracao_minutos, 30) AS DuracaoMinutos
+                    FROM public.agendamento_itens ai
+                    LEFT JOIN public.servicos s ON s.id = ai.idservico
+                    WHERE ai.idagendamento = @IdItem
+                      AND ai.idempresa = {_identidade.IdEmpresaLogado}
                 ";
 
                 var itens = await _dbConnectionFactory.QueryAsync<AgendamentoItem>(_queryItens, new { IdItem = idItem });
@@ -310,6 +396,53 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
 
                 var result = await _dbConnectionFactory.QueryAsync<AgendamentoPendenteDTO>(query, new { DtStart = dtLimite });
                 return result;
+            }
+            catch (Exception ex)
+            {
+                throw new TratamentoExcecao(ex.Message.Traduzir());
+            }
+        }
+
+        public async Task<IEnumerable<AgendamentoCalendarioDTO>> CarregarCalendario(DateTime inicio, DateTime fim)
+        {
+            try
+            {
+                var query = $@"
+                    SELECT
+                        a.id                    AS ID,
+                        a.idprofissional        AS IdProfissional,
+                        a.descricao             AS Descricao,
+                        a.telefone              AS Telefone,
+                        a.dtagendamento         AS DtAgendamento,
+                        COALESCE(
+                            NULLIF(a.duracao_minutos, 0),
+                            (
+                                SELECT COALESCE(NULLIF(SUM(s.duracao_minutos), 0), 30)
+                                FROM public.agendamento_itens ai
+                                JOIN public.servicos s ON s.id = ai.idservico
+                                WHERE ai.idagendamento = a.id
+                            ),
+                            30
+                        )                       AS DuracaoMinutos,
+                        a.status                AS Status,
+                        COALESCE(p.descricao, '') AS NomeProfissional,
+                        COALESCE(NULLIF(p.cor_agenda, ''), '#3B82F6') AS CorAgenda,
+                        COALESCE((
+                            SELECT SUM(i.valor_cobrado)
+                            FROM public.agendamento_itens i
+                            WHERE i.idagendamento = a.id
+                        ), 0)                   AS ValorTotal
+                    FROM public.agendamentos a
+                    LEFT JOIN public.profissionais p ON p.id = a.idprofissional
+                    WHERE a.idempresa = {_identidade.IdEmpresaLogado}
+                      AND a.dtagendamento >= @Inicio
+                      AND a.dtagendamento < @Fim
+                      AND a.status <> 3
+                    ORDER BY a.dtagendamento ASC, a.id ASC;
+                ";
+
+                return await _dbConnectionFactory.QueryAsync<AgendamentoCalendarioDTO>(query, new { Inicio = inicio, Fim = fim })
+                    .ConfigureAwait(false);
             }
             catch (Exception ex)
             {

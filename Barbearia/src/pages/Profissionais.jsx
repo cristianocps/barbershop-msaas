@@ -7,7 +7,7 @@ import { ProfissionalForm, ProfissionalFormDefault } from '../components/forms/P
 import { ProfissionaisService } from '../services/Configuracoes/ProfissionaisService';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useConfirm } from '../components/ui/ConfirmModal';
+import { useConfirm } from '../components/UI/ConfirmModal';
 
 export function Profissionais() {
     const [data, setData] = useState([]);

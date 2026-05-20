@@ -12,5 +12,6 @@ namespace BarberShop.Dominio.Interfaces.Servicos.Configuracoes
         Task<Cliente> Editar(long idItem);
         Task<long> AlterarClientes(Cliente dados);
         Task<long> AlterarStatusCliente(long id, int status);
+        Task<IEnumerable<ClienteBuscaDTO>> BuscarClientes(string search, int? limit = 15);
     }
 }

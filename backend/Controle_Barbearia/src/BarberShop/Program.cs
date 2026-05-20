@@ -1,6 +1,7 @@
 using BarberShop.AbstractFactory;
 using BarberShop.Configuracoes;
 using BarberShop.Data;
+using BarberShop.Data.Seed;
 using BarberShop.Dominio.Interfaces.Base;
 using Gestao_Winsiga.Apresentacao.AbstractFactory;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -24,6 +25,8 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => options.Sign
                .AddEntityFrameworkStores<ApplicationDbContext>()
                .AddRoles<IdentityRole>()
                .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<IDatabaseSeeder, DatabaseSeeder>();
 
 // Aumenta o limite de body do Kestrel para aceitar imagens em Base64 (logo da empresa)
 builder.WebHost.ConfigureKestrel(opts =>
@@ -230,6 +233,9 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     db.Database.Migrate();
+
+    var seeder = scope.ServiceProvider.GetRequiredService<IDatabaseSeeder>();
+    await seeder.SeedAsync();
 }
 
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())

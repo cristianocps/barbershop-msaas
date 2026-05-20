@@ -91,10 +91,13 @@ services:
     pull_policy: build
     container_name: barbershop_frontend
     restart: unless-stopped
+
     depends_on:
       - backend
     networks:
       - barbershop_net
+    ports:
+      - "80:80"
     labels:
       - "traefik.enable=true"
 

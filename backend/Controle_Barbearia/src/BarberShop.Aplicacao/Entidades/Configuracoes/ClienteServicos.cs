@@ -42,6 +42,11 @@ namespace BarberShop.Aplicacao.Entidades.Configuracoes
             return await _clienteRepositorio.Editar(idItem).ConfigureAwait(false);
         }
 
+        public async Task<IEnumerable<ClienteBuscaDTO>> BuscarClientes(string search, int? limit = 15)
+        {
+            return await _clienteRepositorio.BuscarClientes(search, limit).ConfigureAwait(false);
+        }
+
         public void Dispose()
         {
             _clienteRepositorio?.Dispose();

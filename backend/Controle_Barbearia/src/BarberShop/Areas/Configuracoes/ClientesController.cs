@@ -80,6 +80,18 @@ namespace BarberShop.Areas.Configuracoes
             catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
         }
 
+        [HttpGet("buscar-clientes")]
+        public async Task<IActionResult> BuscarClientes(string? q, int? limit = 15)
+        {
+            try
+            {
+                var _result = await _clienteServicos.BuscarClientes(q ?? "", limit).ConfigureAwait(false);
+                return await ResponseJson(ResponseJsonTypes.Success, "", _result, _result.Count()).ConfigureAwait(false);
+            }
+            catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }
+            catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
+        }
+
         [HttpGet("carregarcombo-clientes")]
         public async Task<IActionResult> CarregarComboStatusClientes(string? search, int? page)
         {

@@ -7,7 +7,7 @@ import { EmpresaForm, EmpresaFormDefault } from '../components/forms/EmpresaForm
 import { EmpresasService } from '../services/Configuracoes/EmpresasService';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useConfirm } from '../components/ui/ConfirmModal';
+import { useConfirm } from '../components/UI/ConfirmModal';
 
 const ProfessionalWelcomeCard = ({ onAction }) => (
     <div style={{

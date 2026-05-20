@@ -7,7 +7,7 @@ import { UsuarioForm, UsuarioFormDefault } from '../components/forms/UsuarioForm
 import { UsuariosService } from '../services/Acessos/UsuariosService';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useConfirm } from '../components/ui/ConfirmModal';
+import { useConfirm } from '../components/UI/ConfirmModal';
 
 export function Usuarios() {
     const [data, setData] = useState([]);

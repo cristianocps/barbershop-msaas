@@ -42,6 +42,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                     SET 
                         descricao = @Descricao,
                         telefone = @Telefone,
+                        cpf = @Cpf,
                         endereco = @Endereco,
                         status = @Status
                     WHERE 
@@ -53,9 +54,9 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                 {
                     _query = $@"
                     INSERT INTO public.clientes ( 
-                        idempresa, idusuario, descricao, telefone, endereco, dtcriacao, status
+                        idempresa, idusuario, descricao, telefone, cpf, endereco, dtcriacao, status
                     ) VALUES (
-                        {_identidade.IdEmpresaLogado}, {_identidade.IdUsuarioLogado}, @Descricao, @Telefone, @Endereco, @DtCriacao, 1
+                        {_identidade.IdEmpresaLogado}, {_identidade.IdUsuarioLogado}, @Descricao, @Telefone, @Cpf, @Endereco, @DtCriacao, 1
                     )
                     RETURNING id;";
                 }
@@ -82,14 +83,15 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                     FilteredData AS (
                         SELECT 
                             id AS ID, idempresa AS IdEmpresa, idusuario AS IdUsuario,
-                            descricao AS Descricao, telefone AS Telefone, endereco AS Endereco,
+                            descricao AS Descricao, telefone AS Telefone, cpf AS Cpf, endereco AS Endereco,
                             dtcriacao AS DtCriacao, status AS Status,
                             COUNT(id) OVER() AS RecordsFiltered
                         FROM public.clientes
                         WHERE idempresa = {_identidade.IdEmpresaLogado}
                           AND (@SearchText::text = ''
                                OR descricao ILIKE '%' || @SearchText::text || '%'
-                               OR telefone ILIKE '%' || @SearchText::text || '%')
+                               OR telefone ILIKE '%' || @SearchText::text || '%'
+                               OR cpf ILIKE '%' || @SearchText::text || '%')
                     )
                     SELECT 
                         f.*, t.RecordsTotal
@@ -127,7 +129,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                 var _query = $@"
                     SELECT 
                         id AS ID, idempresa AS IdEmpresa, idusuario AS IdUsuario,
-                        descricao AS Descricao, telefone AS Telefone, endereco AS Endereco,
+                        descricao AS Descricao, telefone AS Telefone, cpf AS Cpf, endereco AS Endereco,
                         dtcriacao AS DtCriacao, status AS Status
                     FROM public.clientes
                     WHERE id = @IdItem
@@ -154,7 +156,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                     FROM public.clientes
                     WHERE idempresa = {_identidade.IdEmpresaLogado}
                       AND status = 1 
-                      AND (@Search = '' OR descricao ILIKE '%' || @Search || '%' OR telefone ILIKE '%' || @Search || '%')
+                      AND (@Search = '' OR descricao ILIKE '%' || @Search || '%' OR telefone ILIKE '%' || @Search || '%' OR cpf ILIKE '%' || @Search || '%')
                     ORDER BY descricao ASC
                     OFFSET @Offset LIMIT @Limit;
                 ";
@@ -167,6 +169,54 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                 });
 
                 return await Task.FromResult(_result).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                throw new TratamentoExcecao(ex.Message.Traduzir());
+            }
+        }
+
+        public async Task<IEnumerable<ClienteBuscaDTO>> BuscarClientes(string search, int? limit = 15)
+        {
+            try
+            {
+                var term = (search ?? "").Trim();
+                var digits = new string(term.Where(char.IsDigit).ToArray());
+                var lim = Math.Clamp(limit ?? 15, 1, 30);
+
+                var query = $@"
+                    SELECT
+                        id AS ID,
+                        descricao AS Descricao,
+                        telefone AS Telefone,
+                        cpf AS Cpf,
+                        TRIM(
+                            descricao
+                            || CASE WHEN COALESCE(telefone, '') <> '' THEN ' · ' || telefone ELSE '' END
+                            || CASE WHEN COALESCE(cpf, '') <> '' THEN ' · CPF ' || cpf ELSE '' END
+                        ) AS Label
+                    FROM public.clientes
+                    WHERE idempresa = {_identidade.IdEmpresaLogado}
+                      AND status = 1
+                      AND (
+                          @Term = ''
+                          OR descricao ILIKE '%' || @Term || '%'
+                          OR telefone ILIKE '%' || @Term || '%'
+                          OR cpf ILIKE '%' || @Term || '%'
+                          OR (@Digits <> '' AND regexp_replace(COALESCE(telefone, ''), '\D', '', 'g') LIKE '%' || @Digits || '%')
+                          OR (@Digits <> '' AND regexp_replace(COALESCE(cpf, ''), '\D', '', 'g') LIKE '%' || @Digits || '%')
+                      )
+                    ORDER BY descricao ASC
+                    LIMIT @Limit;";
+
+                var result = await _dbConnectionFactory.QueryAsync<ClienteBuscaDTO>(query, new
+                {
+                    Term = term.VarcharToSQL(),
+                    Digits = digits,
+                    Limit = lim
+                });
+
+                return result;
             }
             catch (Exception ex)
             {

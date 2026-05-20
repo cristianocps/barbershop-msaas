@@ -40,18 +40,23 @@ namespace BarberShop.Dominio.Entidade.Configuracoes
         public string? Telefone { get; set; }
 
         [DataType(DataType.Text)]
+        [MaxLength(14, ErrorMessage = "tamanho máximo 14 caracteres")]
+        [Column("cpf", Order = 6, TypeName = "varchar(14)")]
+        public string? Cpf { get; set; }
+
+        [DataType(DataType.Text)]
         [MaxLength(60, ErrorMessage = "tamanho máximo 60 caracteres")]
-        [Column("endereco", Order = 6, TypeName = "varchar(60)")]
+        [Column("endereco", Order = 7, TypeName = "varchar(60)")]
         public string? Endereco { get; set; }
 
         [DataType(DataType.DateTime)]
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true, ConvertEmptyStringToNull = true)]
         [Required(ErrorMessage = "obrigatório informar a propriedade: dtcriacao", AllowEmptyStrings = false)]
-        [Column("dtcriacao", Order = 7, TypeName = "timestamp without time zone")]
+        [Column("dtcriacao", Order = 8, TypeName = "timestamp without time zone")]
         public DateTime DtCriacao { get; set; } = DateTime.Now;
 
         [Required(ErrorMessage = "obrigatório informar a propriedade: status", AllowEmptyStrings = true)]
-        [Column("status", Order = 8, TypeName = "smallint")]
+        [Column("status", Order = 9, TypeName = "smallint")]
         public int Status { get; set; } = default!;
 
         [NotMapped]

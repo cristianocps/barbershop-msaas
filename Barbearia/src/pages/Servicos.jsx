@@ -7,7 +7,7 @@ import { ServicoForm, ServicoFormDefault } from '../components/forms/ServicoForm
 import { ServicosAppService } from '../services/Configuracoes/ServicosService';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useConfirm } from '../components/ui/ConfirmModal';
+import { useConfirm } from '../components/UI/ConfirmModal';
 
 export function Servicos() {
     const [data, setData] = useState([]);
@@ -69,7 +69,7 @@ export function Servicos() {
                 descricao:     dados.descricao     ?? dados.Descricao     ?? '',
                 valorUnitario: dados.valorUnitario ?? dados.ValorUnitario ?? dados.valor_unitario ?? '',
                 unidade:       dados.unidade       ?? dados.Unidade       ?? 'UN',
-                duracao:       dados.duracao       ?? dados.Duracao       ?? '',
+                duracao:       dados.duracao       ?? dados.Duracao       ?? dados.duracaoMinutos ?? dados.DuracaoMinutos ?? '',
                 observacao:    dados.observacao    ?? dados.Observacao    ?? '',
                 idEmpresa:     dados.idEmpresa     ?? dados.IdEmpresa     ?? 0,
                 status:        dados.status        ?? dados.Status        ?? 1,

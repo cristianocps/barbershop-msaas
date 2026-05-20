@@ -28,6 +28,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <EmbeddedResource Include="Data\Scripts\*.sql" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <ProjectReference Include="..\BarberShop.Aplicacao\BarberShop.Aplicacao.csproj" />
 	  <ProjectReference Include="..\BarberShop.Dominio\BarberShop.Dominio.csproj" />
 	  <ProjectReference Include="..\BarberShop.Infraestrutura\BarberShop.Infraestrutura.csproj" />

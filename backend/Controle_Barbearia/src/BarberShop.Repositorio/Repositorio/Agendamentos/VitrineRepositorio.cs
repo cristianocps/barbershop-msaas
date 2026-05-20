@@ -79,7 +79,8 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                         idempresa      AS IdEmpresa,
                         descricao      AS Descricao,
                         unidade        AS Unidade,
-                        valor_unitario AS ValorUnitario
+                        valor_unitario AS ValorUnitario,
+                        duracao_minutos AS DuracaoMinutos
                     FROM public.servicos
                     WHERE idempresa = @IdEmpresa
                       AND status    = 1
@@ -152,15 +153,21 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
 
                 var _queryOcupados = @"
                     SELECT 
-                        TO_CHAR(a.dtagendamento, 'HH24:MI') as HoraStr,
-                        COALESCE(SUM(CAST(NULLIF(regexp_replace(s.unidade, '\D', '', 'g'), '') AS INTEGER)), 30) as DuracaoMinutos
+                        TO_CHAR(a.dtagendamento, 'HH24:MI') AS HoraStr,
+                        COALESCE(
+                            NULLIF(a.duracao_minutos, 0),
+                            (
+                                SELECT COALESCE(NULLIF(SUM(s.duracao_minutos), 0), 30)
+                                FROM public.agendamento_itens ai
+                                JOIN public.servicos s ON s.id = ai.idservico
+                                WHERE ai.idagendamento = a.id
+                            ),
+                            30
+                        ) AS DuracaoMinutos
                     FROM public.agendamentos a
-                    LEFT JOIN public.agendamento_itens i ON i.idagendamento = a.id
-                    LEFT JOIN public.servicos s ON s.id = i.idservico
                     WHERE a.idprofissional = @IdProfissional
                       AND TO_CHAR(a.dtagendamento, 'YYYY-MM-DD') = @DataStr
-                      AND a.status != 3
-                    GROUP BY a.id, a.dtagendamento;";
+                      AND a.status != 3;";
 
                 var _ocupadosDB = await _dbConnectionFactory.QueryAsync<dynamic>(
                     _queryOcupados, new { IdProfissional = idProfissional, DataStr = dataStr });
@@ -314,6 +321,16 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                         item.ValorCobrado
                     });
                 }
+
+                await _dbConnectionFactory.ExecuteAsync(@"
+                    UPDATE public.agendamentos a
+                    SET duracao_minutos = COALESCE((
+                        SELECT NULLIF(SUM(s.duracao_minutos), 0)
+                        FROM public.agendamento_itens ai
+                        JOIN public.servicos s ON s.id = ai.idservico
+                        WHERE ai.idagendamento = @IdAgendamento
+                    ), 30)
+                    WHERE a.id = @IdAgendamento;", new { IdAgendamento = _idAgendamento });
 
                 // ── 5.4 Busca nome do profissional para montar o retorno ──
                 var _queryProfissional = @" SELECT descricao, telefone FROM public.profissionais  WHERE id = @Id LIMIT 1;";

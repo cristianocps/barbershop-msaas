@@ -18,10 +18,11 @@ COPY ["src/BarberShop.Servicos/BarberShop.Servicos.csproj",         "src/BarberS
 # Restore de dependências
 RUN dotnet restore "src/BarberShop/BarberShop.csproj"
 
-# Copia todo o código e publica
+# Copia todo o código (obj/bin excluídos pelo .dockerignore)
 COPY . .
 WORKDIR /src/src/BarberShop
-RUN dotnet publish "BarberShop.csproj" -c Release -o /app/publish --no-restore
+# Restore após COPY evita artefatos NuGet gerados no Windows sobrescreverem o build Linux
+RUN dotnet publish "BarberShop.csproj" -c Release -o /app/publish
 
 # ── Estágio 2: runtime ────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final

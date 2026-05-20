@@ -8,7 +8,7 @@ import { TipoChaveForm, TipoChaveFormDefault } from '../components/forms/TipoCha
 import { DadosBancariosService } from '../services/Configuracoes/DadosBancariosService';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useConfirm } from '../components/ui/ConfirmModal';
+import { useConfirm } from '../components/UI/ConfirmModal';
 import { usePasswordPrompt } from '../components/UI/PasswordPromptModal';
 import { Eye, EyeOff } from 'lucide-react';
 

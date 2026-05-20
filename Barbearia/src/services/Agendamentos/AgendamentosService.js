@@ -23,5 +23,11 @@ export const AgendamentosService = {
     },
     getPendentesHoje: () => {
         return api.get(`${BASE_PATH}/get-pendentes-hoje`);
-    }
+    },
+    carregarCalendario: (inicio, fim) => {
+        const toParam = (d) => (d instanceof Date ? d.toISOString() : d);
+        return api.get(
+            `${BASE_PATH}/carregar-calendario?inicio=${encodeURIComponent(toParam(inicio))}&fim=${encodeURIComponent(toParam(fim))}`
+        );
+    },
 };

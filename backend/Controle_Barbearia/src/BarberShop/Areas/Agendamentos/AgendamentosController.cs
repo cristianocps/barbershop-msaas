@@ -151,5 +151,20 @@ namespace BarberShop.Areas.Agendamentos
             catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }
             catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
         }
+
+        [HttpGet("carregar-calendario")]
+        public async Task<JsonResult> CarregarCalendario([FromQuery] DateTime inicio, [FromQuery] DateTime fim)
+        {
+            try
+            {
+                if (fim <= inicio)
+                    throw new TratamentoExcecao("Período inválido para o calendário.");
+
+                var _result = await _agendamentoServicos.CarregarCalendario(inicio, fim).ConfigureAwait(false);
+                return await ResponseJson(ResponseJsonTypes.Success, "", _result).ConfigureAwait(false);
+            }
+            catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }
+            catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
+        }
     }
 }

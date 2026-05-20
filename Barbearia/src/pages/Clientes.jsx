@@ -7,7 +7,7 @@ import { ClienteForm, ClienteFormDefault } from '../components/forms/ClienteForm
 import { ClientesService } from '../services/Configuracoes/ClientesService';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useConfirm } from '../components/ui/ConfirmModal';
+import { useConfirm } from '../components/UI/ConfirmModal';
 
 export function Clientes() {
     const [data, setData] = useState([]);
@@ -68,6 +68,7 @@ export function Clientes() {
                 id:        dados.id        ?? dados.ID        ?? dados.Id        ?? id,
                 descricao: dados.descricao ?? dados.Descricao ?? dados.nome ?? dados.Nome ?? '',
                 telefone:  dados.telefone  ?? dados.Telefone  ?? '',
+                cpf:       dados.cpf       ?? dados.Cpf       ?? '',
                 endereco:  dados.endereco  ?? dados.Endereco  ?? '',
                 status:    dados.status    ?? dados.Status    ?? 1,
             });
@@ -90,6 +91,7 @@ export function Clientes() {
                 id:        form.id || 0,
                 descricao: form.descricao || '',
                 telefone:  form.telefone || '',
+                cpf:       form.cpf || '',
                 endereco:  form.endereco || '',
                 status:    form.status ?? 1,
             });

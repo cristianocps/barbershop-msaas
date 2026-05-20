@@ -12,6 +12,10 @@ export const ClientesService = {
     carregarCombo: (search = "", page = 1) => {
         return api.get(`${BASE_PATH}/carregarcombo-clientes?search=${search}&page=${page}`);
     },
+    buscar: (q = "", limit = 15) => {
+        const params = new URLSearchParams({ q, limit: String(limit) });
+        return api.get(`${BASE_PATH}/buscar-clientes?${params}`);
+    },
     editar: (id) => {
         return api.post(`${BASE_PATH}/editar-clientes?idItem=${id}`);
     },

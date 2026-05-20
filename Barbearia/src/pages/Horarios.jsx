@@ -7,7 +7,7 @@ import { HorarioForm, HorarioFormDefault } from '../components/forms/HorarioForm
 import { HorariosService } from '../services/Configuracoes/HorariosService';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useConfirm } from '../components/ui/ConfirmModal';
+import { useConfirm } from '../components/UI/ConfirmModal';
 
 export function Horarios() {
     const [data, setData] = useState([]);

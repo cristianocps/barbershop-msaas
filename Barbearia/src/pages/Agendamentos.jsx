@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { CalendarDays, Edit2, XCircle, Check, Scissors, Search } from 'lucide-react';
+import { CalendarDays, Edit2, XCircle, Check, List, LayoutGrid } from 'lucide-react';
+import { AgendamentoCalendario } from '../components/Agendamentos/AgendamentoCalendario';
 import { DataGrid } from '../components/UI/DataGrid';
 import { PageHeader, PageSearch } from '../components/UI/PageHeader';
 import { FormModal } from '../components/UI/FormModal';
 import { AgendamentoForm, AgendamentoFormDefault } from '../components/forms/AgendamentoForm';
 import { AgendamentosService } from '../services/Agendamentos/AgendamentosService';
 import { useToast } from '../contexts/ToastContext';
-import { useConfirm } from '../components/ui/ConfirmModal';
+import { useConfirm } from '../components/UI/ConfirmModal';
 
 export function Agendamentos() {
     const [data, setData] = useState([]);
@@ -16,6 +17,8 @@ export function Agendamentos() {
     const [pageSize, setPageSize] = useState(10);
     const [total, setTotal] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
+    const [viewMode, setViewMode] = useState('calendario');
+    const [calendarKey, setCalendarKey] = useState(0);
     const toast = useToast();
     const { confirmModal, askConfirm } = useConfirm();
 
@@ -47,8 +50,12 @@ export function Agendamentos() {
 
     useEffect(() => { loadData(); }, [loadData]);
 
-    const openNew = () => {
-        setForm(AgendamentoFormDefault());
+    const openNew = (preset = {}) => {
+        setForm({
+            ...AgendamentoFormDefault(),
+            ...preset,
+            idProfissional: preset.idProfissional != null ? String(preset.idProfissional) : '',
+        });
         setModalOpen(true);
     };
 
@@ -85,15 +92,18 @@ export function Agendamentos() {
             const itensBackend = dados.Itens ?? dados.itens ?? [];
             const itensMapeados = Array.isArray(itensBackend) && itensBackend.length > 0
                 ? itensBackend.map(i => ({
-                    idServico:    String(i.IdServico    ?? i.idServico    ?? ''),
-                    valorCobrado: String(i.ValorCobrado ?? i.valorCobrado ?? ''),
+                    idServico:      String(i.IdServico      ?? i.idServico      ?? ''),
+                    valorCobrado:   String(i.ValorCobrado   ?? i.valorCobrado   ?? ''),
+                    duracaoMinutos: i.DuracaoMinutos ?? i.duracaoMinutos ?? 0,
                 }))
-                : [{ idServico: '', valorCobrado: '' }];
+                : [{ idServico: '', valorCobrado: '', duracaoMinutos: 0 }];
 
             setForm({
                 id:             dados.ID             ?? dados.id             ?? id,
+                idCliente:      dados.IdCliente      ?? dados.idCliente      ?? 0,
                 descricao:      dados.Descricao      ?? dados.descricao      ?? '',
                 telefone:       dados.Telefone       ?? dados.telefone       ?? '',
+                cpf:            dados.Cpf            ?? dados.cpf            ?? '',
                 dtAgendamento:  dtFormatted,
                 idProfissional: dados.IdProfissional ?? dados.idProfissional ?? '',
                 itens:          itensMapeados,
@@ -130,8 +140,10 @@ export function Agendamentos() {
 
             await AgendamentosService.alterar({
                 id:             form.id || 0,
+                idCliente:      parseInt(form.idCliente, 10) || 0,
                 descricao:      form.descricao,
                 telefone:       form.telefone     || '',
+                cpf:            form.cpf          || '',
                 dtAgendamento:  form.dtAgendamento,
                 idProfissional: form.idProfissional ? parseInt(form.idProfissional) : null,
                 itens:          itensPayload,
@@ -141,6 +153,7 @@ export function Agendamentos() {
             toast.success(isEditing ? 'Agendamento atualizado com sucesso!' : 'Agendamento criado com sucesso!');
             setModalOpen(false);
             loadData();
+            setCalendarKey((k) => k + 1);
         } catch (err) {
             toast.error(err.message || 'Erro ao salvar.');
         } finally {
@@ -159,6 +172,7 @@ export function Agendamentos() {
                     await AgendamentosService.alterarStatus(id, 0);
                     toast.success('Agendamento cancelado com sucesso.');
                     loadData();
+                    setCalendarKey((k) => k + 1);
                 } catch (err) {
                     toast.error(err.message || 'Erro ao cancelar.');
                 }
@@ -317,6 +331,31 @@ export function Agendamentos() {
                 newLabel="Novo Agendamento"
                 onNew={openNew}
             />
+            <div className="view-toggle-wrap">
+                <button
+                    type="button"
+                    className={`view-toggle-btn ${viewMode === 'lista' ? 'active' : ''}`}
+                    onClick={() => setViewMode('lista')}
+                >
+                    <List size={16} /> Lista
+                </button>
+                <button
+                    type="button"
+                    className={`view-toggle-btn ${viewMode === 'calendario' ? 'active' : ''}`}
+                    onClick={() => setViewMode('calendario')}
+                >
+                    <LayoutGrid size={16} /> Calendário
+                </button>
+            </div>
+
+            {viewMode === 'calendario' ? (
+                <AgendamentoCalendario
+                    key={calendarKey}
+                    onSelectAgendamento={(id) => openEdit({ id, ID: id, Id: id })}
+                    onCreateAgendamento={(preset) => openNew(preset)}
+                />
+            ) : (
+                <>
             <PageSearch
                 value={searchTerm}
                 onChange={setSearchTerm}
@@ -337,6 +376,8 @@ export function Agendamentos() {
                 renderCard={renderCard}
                 emptyTitle="Nenhum agendamento encontrado"
             />
+                </>
+            )}
 
             <FormModal
                 open={modalOpen}

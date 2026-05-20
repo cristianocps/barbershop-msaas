@@ -17,6 +17,16 @@ export function ClienteForm({ form, onChange }) {
                 />
             </FormField>
 
+            <FormField label="CPF" hint="Opcional — usado na busca de agendamentos">
+                <input
+                    className="fm-input"
+                    type="text"
+                    placeholder="000.000.000-00"
+                    value={form.cpf || ''}
+                    onChange={e => set('cpf', e.target.value)}
+                />
+            </FormField>
+
             <FormField label="Telefone" hint="Será usado para confirmar os agendamentos">
                 <input
                     className="fm-input"
@@ -55,6 +65,7 @@ export const ClienteFormDefault = () => ({
     id: 0,
     descricao: '',
     telefone: '',
+    cpf: '',
     endereco: '',
     status: 1,
 });

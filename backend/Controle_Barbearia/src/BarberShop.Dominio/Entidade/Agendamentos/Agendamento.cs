@@ -74,6 +74,9 @@ namespace BarberShop.Dominio.Entidade.Agendamentos
         [Column("comprovante_pix", Order = 12, TypeName = "text")]
         public string? ComprovantePix { get; set; }
 
+        [Column("duracao_minutos", Order = 13, TypeName = "integer")]
+        public int DuracaoMinutos { get; set; } = 30;
+
         [NotMapped]
         [ScaffoldColumn(false)]
         public long RecordsTotal { get; set; } = default!;
@@ -93,5 +96,10 @@ namespace BarberShop.Dominio.Entidade.Agendamentos
         [NotMapped]
         [ScaffoldColumn(false)]
         public IEnumerable<AgendamentoItem> Itens { get; set; } = new List<AgendamentoItem>();
+
+        /// <summary>CPF informado no formulário ao criar cliente junto com o agendamento.</summary>
+        [NotMapped]
+        [ScaffoldColumn(false)]
+        public string? Cpf { get; set; }
     }
 }

@@ -47,6 +47,10 @@ namespace BarberShop.Dominio.Entidade.Agendamentos
 
         [NotMapped]
         [ScaffoldColumn(false)]
+        public int DuracaoMinutos { get; set; }
+
+        [NotMapped]
+        [ScaffoldColumn(false)]
         public long RecordsTotal { get; set; } = default!;
 
         [NotMapped]

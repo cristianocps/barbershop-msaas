@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FormField, FormRow } from '../UI/FormModal';
+import { ClienteAutocomplete } from '../UI/ClienteAutocomplete';
 import { ServicosAppService } from '../../services/Configuracoes/ServicosService';
 import { ProfissionaisService } from '../../services/Configuracoes/ProfissionaisService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -13,7 +14,7 @@ const STATUS_MAP = [
 ];
 
 // Linha vazia padrão de item de serviço
-const itemVazio = () => ({ idServico: '', valorCobrado: '' });
+const itemVazio = () => ({ idServico: '', valorCobrado: '', duracaoMinutos: 0 });
 
 export function AgendamentoForm({ form, onChange }) {
     const set = (field, value) => onChange({ ...form, [field]: value });
@@ -68,7 +69,7 @@ export function AgendamentoForm({ form, onChange }) {
         }
 
         const novosItens = itens.map((item, i) =>
-            i === index ? { ...item, idServico, valorCobrado: '' } : item
+            i === index ? { ...item, idServico, valorCobrado: '', duracaoMinutos: 0 } : item
         );
         onChange({ ...form, itens: novosItens });
 
@@ -80,10 +81,18 @@ export function AgendamentoForm({ form, onChange }) {
             const res = await ServicosAppService.editar(idServico);
             const dados = res?.Data ?? res?.data ?? res;
             const valor = dados?.ValorUnitario ?? dados?.valor_unitario ?? dados?.valorUnitario ?? 0;
+            const duracao = dados?.DuracaoMinutos ?? dados?.duracaoMinutos ?? dados?.duracao ?? 30;
             onChange(prev => ({
                 ...prev,
                 itens: (prev.itens && prev.itens.length > 0 ? prev.itens : [itemVazio()]).map((item, i) =>
-                    i === index ? { ...item, idServico, valorCobrado: Number(valor).toFixed(2) } : item
+                    i === index
+                        ? {
+                            ...item,
+                            idServico,
+                            valorCobrado: Number(valor).toFixed(2),
+                            duracaoMinutos: parseInt(duracao, 10) || 30,
+                        }
+                        : item
                 )
             }));
         } catch {
@@ -115,20 +124,35 @@ export function AgendamentoForm({ form, onChange }) {
         return acc + (isNaN(v) ? 0 : v);
     }, 0);
 
+    const totalDuracao = itens.reduce((acc, item) => {
+        const d = parseInt(item.duracaoMinutos, 10);
+        return acc + (isNaN(d) || d <= 0 ? 0 : d);
+    }, 0);
+
     return (
         <>
-            <FormField label="Descrição / Cliente" required>
-                <input
-                    className="fm-input"
-                    type="text"
-                    placeholder="Ex: João da Silva"
-                    value={form.descricao || ''}
-                    onChange={e => set('descricao', e.target.value)}
-                    autoFocus
+            <FormField label="Cliente" required hint="Busque por nome, CPF ou celular no cadastro">
+                <ClienteAutocomplete
+                    idCliente={form.idCliente ?? 0}
+                    nome={form.descricao || ''}
+                    telefone={form.telefone || ''}
+                    cpf={form.cpf || ''}
+                    onChange={({ idCliente, descricao, telefone, cpf }) =>
+                        onChange({ ...form, idCliente, descricao, telefone, cpf })
+                    }
                 />
             </FormField>
 
             <FormRow>
+                <FormField label="CPF" hint="Opcional">
+                    <input
+                        className="fm-input"
+                        type="text"
+                        placeholder="000.000.000-00"
+                        value={form.cpf || ''}
+                        onChange={e => set('cpf', e.target.value)}
+                    />
+                </FormField>
                 <FormField label="Telefone" required>
                     <input
                         className="fm-input"
@@ -138,15 +162,16 @@ export function AgendamentoForm({ form, onChange }) {
                         onChange={e => set('telefone', e.target.value)}
                     />
                 </FormField>
-                <FormField label="Data e Hora" required>
-                    <input
-                        className="fm-input"
-                        type="datetime-local"
-                        value={form.dtAgendamento || ''}
-                        onChange={e => set('dtAgendamento', e.target.value)}
-                    />
-                </FormField>
             </FormRow>
+
+            <FormField label="Data e Hora" required>
+                <input
+                    className="fm-input"
+                    type="datetime-local"
+                    value={form.dtAgendamento || ''}
+                    onChange={e => set('dtAgendamento', e.target.value)}
+                />
+            </FormField>
 
             {user?.userMaxPolicy >= 3 && (
                 <FormField label="Profissional">
@@ -265,11 +290,18 @@ export function AgendamentoForm({ form, onChange }) {
                         >
                             + Adicionar serviço
                         </button>
-                        {totalItens > 0 && (
-                            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#16a34a' }}>
-                                Total: R$ {totalItens.toFixed(2).replace('.', ',')}
-                            </span>
-                        )}
+                        <span style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                            {totalDuracao > 0 && (
+                                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#2563eb' }}>
+                                    Duração: {totalDuracao} min
+                                </span>
+                            )}
+                            {totalItens > 0 && (
+                                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#16a34a' }}>
+                                    Total: R$ {totalItens.toFixed(2).replace('.', ',')}
+                                </span>
+                            )}
+                        </span>
                     </div>
                 </div>
             </FormField>
@@ -301,11 +333,13 @@ export function AgendamentoForm({ form, onChange }) {
 
 export const AgendamentoFormDefault = () => ({
     id: 0,
+    idCliente: 0,
     descricao: '',
     telefone: '',
+    cpf: '',
     dtAgendamento: '',
     idProfissional: '',
-    itens: [itemVazio()],   // ← substitui o idServico avulso
+    itens: [itemVazio()],
     observacao: '',
     status: 1,
 });

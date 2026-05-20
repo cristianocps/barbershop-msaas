@@ -3,6 +3,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
+using System.Text.Json.Serialization;
 
 namespace BarberShop.Dominio.Entidade.Configuracoes
 {
@@ -44,14 +45,19 @@ namespace BarberShop.Dominio.Entidade.Configuracoes
         [Column("valor_unitario", Order = 6, TypeName = "numeric(10,2)")]
         public decimal ValorUnitario { get; set; } = default!;
 
+        [Required(ErrorMessage = "obrigatório informar a propriedade: duracao_minutos", AllowEmptyStrings = true)]
+        [Column("duracao_minutos", Order = 7, TypeName = "integer")]
+        [JsonPropertyName("duracao")]
+        public int DuracaoMinutos { get; set; } = 30;
+
         [DataType(DataType.DateTime)]
         [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true, ConvertEmptyStringToNull = true)]
         [Required(ErrorMessage = "obrigatório informar a propriedade: dtcriacao", AllowEmptyStrings = false)]
-        [Column("dtcriacao", Order = 7, TypeName = "timestamp with time zone")]
+        [Column("dtcriacao", Order = 8, TypeName = "timestamp with time zone")]
         public DateTime DtCriacao { get; set; } = DateTime.Now;
 
         [Required(ErrorMessage = "obrigatório informar a propriedade: status", AllowEmptyStrings = true)]
-        [Column("status", Order = 8, TypeName = "integer")]
+        [Column("status", Order = 9, TypeName = "integer")]
         public int Status { get; set; } = default!;
 
         [NotMapped]

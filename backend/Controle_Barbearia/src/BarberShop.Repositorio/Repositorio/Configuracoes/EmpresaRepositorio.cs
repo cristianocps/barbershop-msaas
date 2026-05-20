@@ -67,6 +67,14 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
 
                 var _result = await _dbConnectionFactory.QuerySingleOrDefaultAsync<long>(_query, dados);
 
+                if (dados.ID == 0 && _result > 0)
+                {
+                    await EmpresaConfiguracaoPadrao.AplicarAsync(
+                        _dbConnectionFactory,
+                        _result,
+                        _identidade.IdUsuarioLogado ?? 0).ConfigureAwait(false);
+                }
+
                 // Se for um novo cadastro, vincula o usuário criador à nova empresa automaticamente
                 // ✅ Aplicado apenas se o usuário estiver na empresa 'Teste' (ID 1) e for do perfil 'Profissional'
                 if (dados.ID == 0 && _result > 0 && (_identidade.IdUsuarioLogado ?? 0) > 0)

@@ -45,6 +45,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                         descricao = @Descricao,
                         unidade = @Unidade,
                         valor_unitario = @ValorUnitario,
+                        duracao_minutos = @DuracaoMinutos,
                         status = @Status
                     WHERE 
                         id = @ID
@@ -54,17 +55,18 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                 {
                     _query = $@"
                     INSERT INTO public.servicos ( 
-                        idempresa, idusuario, descricao, unidade, valor_unitario, dtcriacao, status
+                        idempresa, idusuario, descricao, unidade, valor_unitario, duracao_minutos, dtcriacao, status
                     ) VALUES (
                         @IdEmpresa, 
                         {_identidade.IdUsuarioLogado}, 
-                        @Descricao, @Unidade, @ValorUnitario, @DtCriacao, 1
+                        @Descricao, @Unidade, @ValorUnitario, @DuracaoMinutos, @DtCriacao, 1
                     )
                     RETURNING id;";
                 }
 
                 // Garantindo que se o front não mandou IdEmpresa, usa o logado
                 if (dados.IdEmpresa <= 0) dados.IdEmpresa = _identidade.IdEmpresaLogado ?? 0;
+                if (dados.DuracaoMinutos <= 0) dados.DuracaoMinutos = 30;
 
                 var _result = await _dbConnectionFactory.QuerySingleOrDefaultAsync<long>(_query, dados);
 
@@ -138,7 +140,8 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                     FilteredData AS (
                         SELECT 
                             id AS ID, idempresa AS IdEmpresa, idusuario AS IdUsuario,
-                            descricao AS Descricao, unidade AS Unidade, valor_unitario AS ValorUnitario, 
+                            descricao AS Descricao, unidade AS Unidade, valor_unitario AS ValorUnitario,
+                            duracao_minutos AS DuracaoMinutos,
                             dtcriacao AS DtCriacao, status AS Status,
                             COUNT(id) OVER() AS RecordsFiltered
                         FROM public.servicos
@@ -185,6 +188,7 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                     SELECT 
                         id AS ID, idempresa AS IdEmpresa, idusuario AS IdUsuario,
                         descricao AS Descricao, unidade AS Unidade, valor_unitario AS ValorUnitario,
+                        duracao_minutos AS DuracaoMinutos,
                         dtcriacao AS DtCriacao, status AS Status
                     FROM public.servicos
                     WHERE id = @IdItem
