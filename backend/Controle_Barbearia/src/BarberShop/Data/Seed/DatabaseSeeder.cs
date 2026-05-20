@@ -47,7 +47,63 @@ public sealed class DatabaseSeeder : IDatabaseSeeder
         await ApplyBusinessSchemaAsync(cancellationToken).ConfigureAwait(false);
         await SeedIdentityRolesAsync(cancellationToken).ConfigureAwait(false);
         await SeedBusinessDataAsync(cancellationToken).ConfigureAwait(false);
+        await SeedDesenvolvedorUserAsync(cancellationToken).ConfigureAwait(false);
         await BackfillConfiguracoesEmpresasAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task SeedDesenvolvedorUserAsync(CancellationToken cancellationToken)
+    {
+        var devEmail = _configuration["Seed:DesenvolvedorEmail"] ?? "dev@barbershop.platform";
+        var devPassword = _configuration["Seed:DesenvolvedorPassword"] ?? "Dev@123";
+
+        var devUser = await _userManager.FindByEmailAsync(devEmail).ConfigureAwait(false);
+        if (devUser == null)
+        {
+            devUser = new IdentityUser
+            {
+                UserName = devEmail,
+                Email = devEmail,
+                EmailConfirmed = true
+            };
+
+            var createResult = await _userManager.CreateAsync(devUser, devPassword).ConfigureAwait(false);
+            if (!createResult.Succeeded)
+            {
+                var errors = string.Join("; ", createResult.Errors.Select(e => e.Description));
+                _logger.LogWarning("Não foi possível criar usuário desenvolvedor: {Errors}", errors);
+                return;
+            }
+
+            _logger.LogInformation("Usuário Identity desenvolvedor criado: {Email}", devEmail);
+        }
+
+        var devRole = await _roleManager.FindByNameAsync(nameof(UserRoles.Desenvolvedor)).ConfigureAwait(false);
+        if (devRole != null && !await _userManager.IsInRoleAsync(devUser, devRole.Name!).ConfigureAwait(false))
+        {
+            await _userManager.AddToRoleAsync(devUser, devRole.Name!).ConfigureAwait(false);
+            _logger.LogInformation("Role Desenvolvedor atribuída a {Email}", devEmail);
+        }
+
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        var empresaId = await ScalarAsync<long>(
+            connection,
+            "SELECT COALESCE(MIN(id), 1) FROM public.empresas",
+            cancellationToken).ConfigureAwait(false);
+
+        await ExecuteAsync(connection, null, """
+            INSERT INTO public.usuarios (idempresa, documento, descricao, email, cidade, logon, senha, idclains, dtcriacao, telefone, status)
+            SELECT @idEmpresa, '00000000001', 'Desenvolvedor Plataforma', @email, 'São Paulo', @email, '', @idClaims, NOW(), '11999990001', 1
+            WHERE NOT EXISTS (SELECT 1 FROM public.usuarios WHERE LOWER(email) = LOWER(@email))
+            """,
+            new { idEmpresa = empresaId, email = devEmail, idClaims = devUser.Id },
+            cancellationToken).ConfigureAwait(false);
+
+        _logger.LogInformation(
+            "Usuário desenvolvedor disponível — login: {Email} / {Password}",
+            devEmail,
+            devPassword);
     }
 
     private async Task BackfillConfiguracoesEmpresasAsync(CancellationToken cancellationToken)
@@ -63,6 +119,10 @@ public sealed class DatabaseSeeder : IDatabaseSeeder
         "BarberShop.Data.Scripts.002_fn_obter_credenciais.sql",
         "BarberShop.Data.Scripts.003_duracao_servicos_agendamentos.sql",
         "BarberShop.Data.Scripts.004_cliente_cpf.sql",
+        "BarberShop.Data.Scripts.005_agendamento_fluxo_pagamentos.sql",
+        "BarberShop.Data.Scripts.006_agendamento_timezone_br.sql",
+        "BarberShop.Data.Scripts.007_empresa_infinitepay.sql",
+        "BarberShop.Data.Scripts.008_plataforma_assinatura.sql",
     ];
 
     private async Task ApplyBusinessSchemaAsync(CancellationToken cancellationToken)

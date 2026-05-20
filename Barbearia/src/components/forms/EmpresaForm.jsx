@@ -222,6 +222,15 @@ export function EmpresaForm({ form, onChange }) {
                     <option value={0}>Inativa</option>
                 </select>
             </FormField>
+
+            <FormField label="Infinite Pay — handle" hint="Infinite Tag desta barbearia (ex.: $minha_loja)">
+                <input
+                    className="fm-input"
+                    value={form.infinitepayHandle || ''}
+                    onChange={e => set('infinitepayHandle', e.target.value)}
+                    placeholder="$sua_infinite_tag"
+                />
+            </FormField>
         </>
     );
 }
@@ -238,4 +247,5 @@ export const EmpresaFormDefault = () => ({
     slug: '',
     logoData: '',
     status: 1,
+    infinitepayHandle: '',
 });

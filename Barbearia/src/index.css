@@ -1403,3 +1403,138 @@ p {
   font-size: 0.85rem;
   margin-top: 0.35rem;
 }
+
+/* ====================================
+   FORM CONTROLS (global — páginas fora do modal)
+   ==================================== */
+.fm-field {
+  margin-bottom: 1rem;
+}
+.fm-field:last-child {
+  margin-bottom: 0;
+}
+.fm-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.fm-label span.required {
+  color: #ef4444;
+  margin-left: 2px;
+}
+.fm-input,
+.fm-select,
+.fm-textarea {
+  width: 100%;
+  padding: 0.65rem 0.875rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-muted);
+  font-size: 0.9rem;
+  color: var(--text-main);
+  background: #f9fafb;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.fm-input:focus,
+.fm-select:focus,
+.fm-textarea:focus {
+  border-color: var(--accent-gold);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(246, 176, 1, 0.12);
+}
+.fm-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+.fm-select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+}
+.fm-input-hint {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+.fm-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 480px) {
+  .fm-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+.fm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.fm-btn-primary {
+  background: linear-gradient(135deg, #f6b001, #e09800);
+  color: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(246, 176, 1, 0.25);
+}
+.fm-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+.fm-btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid var(--border-muted);
+}
+.fm-btn-secondary:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.page-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-card);
+  border-radius: 14px;
+  border: 1px solid var(--border-muted);
+  box-shadow: var(--shadow-sm);
+}
+.page-filters-field label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.page-filters-field .fm-input,
+.page-filters-field .fm-select {
+  min-width: 160px;
+}

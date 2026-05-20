@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BarberShop.Dominio\BarberShop.Dominio.csproj" />
+    <ProjectReference Include="..\BarberShop.Infraestrutura\BarberShop.Infraestrutura.csproj" />
   </ItemGroup>
 
 </Project>

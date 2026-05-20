@@ -3,6 +3,7 @@ using BarberShop.Dominio.Entidade.Agendamentos;
 using BarberShop.Dominio.Entidade.DTOs;
 using BarberShop.Dominio.Entidade.Reflection.Texto;
 using BarberShop.Dominio.Enuns;
+using BarberShop.Dominio.Helpers;
 using BarberShop.Dominio.Interfaces.Base;
 using BarberShop.Dominio.Interfaces.Repositorios.Agendamentos;
 using BarberShop.Infraestrutura.padronizar;
@@ -15,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace BarberShop.Repositorio.Repositorio.Agendamentos
 {
-    public class AgendamentosRepositorio : IAgendamentoRepositorio
+    public partial class AgendamentosRepositorio : IAgendamentoRepositorio
     {
         private readonly IUser? _accessor;
         private readonly IConfiguration? _configuration;
@@ -34,6 +35,7 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
         {
             try
             {
+                dados.DtAgendamento = AgendamentoDateTimeHelper.ToStorageUtc(dados.DtAgendamento);
                 dados.IdCliente = await ResolverIdClienteAsync(dados).ConfigureAwait(false);
 
                 var _queryPai = "";
@@ -41,6 +43,11 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
 
                 if (dados.ID > 0)
                 {
+                    var statusAtual = await ObterStatusAgendamentoAsync(dados.ID).ConfigureAwait(false);
+                    if (statusAtual.Status == (int)AgendamentoStatus.Concluido
+                        || statusAtual.Status == (int)AgendamentoStatus.Cancelado)
+                        throw new TratamentoExcecao("Agendamentos concluídos ou cancelados não podem ser alterados.");
+
                     // UPDATE: idservico removido, idprofissional adicionado.
                     _queryPai = $@"
                         UPDATE public.agendamentos
@@ -441,8 +448,18 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                     ORDER BY a.dtagendamento ASC, a.id ASC;
                 ";
 
-                return await _dbConnectionFactory.QueryAsync<AgendamentoCalendarioDTO>(query, new { Inicio = inicio, Fim = fim })
-                    .ConfigureAwait(false);
+                var inicioUtc = AgendamentoDateTimeHelper.DayStartUtc(inicio);
+                var fimUtc = AgendamentoDateTimeHelper.DayStartUtc(fim);
+                if (fimUtc <= inicioUtc)
+                    fimUtc = AgendamentoDateTimeHelper.NextDayStartUtc(inicio);
+
+                var lista = (await _dbConnectionFactory.QueryAsync<AgendamentoCalendarioDTO>(query, new { Inicio = inicioUtc, Fim = fimUtc })
+                    .ConfigureAwait(false)).ToList();
+
+                foreach (var item in lista)
+                    item.DtAgendamento = AgendamentoDateTimeHelper.ToBrazilLocal(item.DtAgendamento);
+
+                return lista;
             }
             catch (Exception ex)
             {

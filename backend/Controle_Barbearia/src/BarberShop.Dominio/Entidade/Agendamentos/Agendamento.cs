@@ -77,6 +77,18 @@ namespace BarberShop.Dominio.Entidade.Agendamentos
         [Column("duracao_minutos", Order = 13, TypeName = "integer")]
         public int DuracaoMinutos { get; set; } = 30;
 
+        [Column("motivo_cancelamento", Order = 14, TypeName = "text")]
+        public string? MotivoCancelamento { get; set; }
+
+        [Column("dt_confirmacao", Order = 15, TypeName = "timestamp with time zone")]
+        public DateTime? DtConfirmacao { get; set; }
+
+        [Column("dt_conclusao", Order = 16, TypeName = "timestamp with time zone")]
+        public DateTime? DtConclusao { get; set; }
+
+        [Column("dt_cancelamento", Order = 17, TypeName = "timestamp with time zone")]
+        public DateTime? DtCancelamento { get; set; }
+
         [NotMapped]
         [ScaffoldColumn(false)]
         public long RecordsTotal { get; set; } = default!;

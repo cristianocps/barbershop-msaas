@@ -123,6 +123,7 @@ export function Empresas() {
                 slug:      dados.slug      ?? dados.Slug      ?? '',
                 logoData:  dados.logoData  ?? dados.LogoData  ?? '',
                 status:    dados.status    ?? dados.Status    ?? 1,
+                infinitepayHandle: dados.infinitepayHandle ?? dados.InfinitepayHandle ?? '',
             });
         } catch (err) {
             toast.error('Erro ao carregar dados: ' + err.message);
@@ -151,6 +152,7 @@ export function Empresas() {
                 slug:      form.slug     || '',
                 logoData:  form.logoData || '',
                 status:    form.status   ?? 1,
+                infinitepayHandle: form.infinitepayHandle || '',
             });
             toast.success(isEditing ? 'Empresa atualizada com sucesso!' : 'Empresa cadastrada com sucesso!');
             setModalOpen(false);

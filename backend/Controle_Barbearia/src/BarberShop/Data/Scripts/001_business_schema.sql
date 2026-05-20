@@ -10,7 +10,9 @@ CREATE TABLE IF NOT EXISTS public.empresas (
     endereco    VARCHAR(60) NOT NULL DEFAULT '',
     logo_data   TEXT,
     status      SMALLINT NOT NULL DEFAULT 1,
-    slug        VARCHAR(100)
+    slug        VARCHAR(100),
+    infinitepay_handle VARCHAR(100),
+    infinitepay_webhook_secret VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS public.usuarios (
@@ -97,7 +99,29 @@ CREATE TABLE IF NOT EXISTS public.agendamentos (
     observacao      TEXT,
     status          INTEGER NOT NULL DEFAULT 1,
     comprovante_pix TEXT,
-    duracao_minutos INTEGER NOT NULL DEFAULT 30
+    duracao_minutos INTEGER NOT NULL DEFAULT 30,
+    motivo_cancelamento TEXT,
+    dt_confirmacao TIMESTAMPTZ,
+    dt_conclusao TIMESTAMPTZ,
+    dt_cancelamento TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS public.agendamento_pagamentos (
+    id                      BIGSERIAL PRIMARY KEY,
+    idempresa               BIGINT NOT NULL,
+    idagendamento           BIGINT NOT NULL,
+    tipo_pagamento          SMALLINT NOT NULL,
+    valor                   NUMERIC(10,2) NOT NULL DEFAULT 0,
+    parcelas                INTEGER,
+    gateway                 VARCHAR(50) NOT NULL DEFAULT 'manual',
+    gateway_order_nsu       VARCHAR(100),
+    gateway_transaction_nsu VARCHAR(100),
+    gateway_link_url        TEXT,
+    gateway_status          VARCHAR(30) NOT NULL DEFAULT 'pending',
+    comprovante_url         TEXT,
+    observacao              TEXT,
+    dtcriacao               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    dtconfirmacao           TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS public.agendamento_itens (

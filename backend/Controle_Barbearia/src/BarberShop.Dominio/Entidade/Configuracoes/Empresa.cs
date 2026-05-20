@@ -74,6 +74,14 @@ namespace BarberShop.Dominio.Entidade.Configuracoes
         [Column("slug", Order = 10, TypeName = "varchar(100)")]
         public string? Slug { get; set; }
 
+        [MaxLength(100)]
+        [Column("infinitepay_handle", TypeName = "varchar(100)")]
+        public string? InfinitepayHandle { get; set; }
+
+        [MaxLength(255)]
+        [Column("infinitepay_webhook_secret", TypeName = "varchar(255)")]
+        public string? InfinitepayWebhookSecret { get; set; }
+
         [NotMapped]
         [ScaffoldColumn(false)]
         public long RecordsTotal { get; set; } = default!;

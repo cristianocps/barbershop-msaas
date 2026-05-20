@@ -316,17 +316,29 @@ export function AgendamentoForm({ form, onChange }) {
                 />
             </FormField>
 
-            <FormField label="Status">
-                <select
-                    className="fm-select"
-                    value={form.status ?? 1}
-                    onChange={e => set('status', parseInt(e.target.value))}
-                >
-                    {STATUS_MAP.map(s => (
-                        <option key={s.value} value={s.value}>{s.label}</option>
-                    ))}
-                </select>
-            </FormField>
+            {(() => {
+                const PolicyLevels = { consulta: 1, usuario: 2, profissional: 3, gerente: 4, admin: 5, desenvolvedor: 6 };
+                let maxPolicy = 0;
+                user?.roles?.forEach((role) => {
+                    const norm = role.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                    const level = PolicyLevels[norm] || 0;
+                    if (level > maxPolicy) maxPolicy = level;
+                });
+                if (maxPolicy < PolicyLevels.gerente) return null;
+                return (
+                    <FormField label="Status (override)">
+                        <select
+                            className="fm-select"
+                            value={form.status ?? 1}
+                            onChange={e => set('status', parseInt(e.target.value))}
+                        >
+                            {STATUS_MAP.map(s => (
+                                <option key={s.value} value={s.value}>{s.label}</option>
+                            ))}
+                        </select>
+                    </FormField>
+                );
+            })()}
         </>
     );
 }

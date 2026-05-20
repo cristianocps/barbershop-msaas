@@ -18,5 +18,12 @@ namespace BarberShop.Dominio.Interfaces.Servicos.Agendamentos
         Task<Agendamento> Editar(long idItem);
         Task<IEnumerable<AgendamentoPendenteDTO>> GetAgendamentosPendentesHoje();
         Task<IEnumerable<AgendamentoCalendarioDTO>> CarregarCalendario(DateTime inicio, DateTime fim);
+        Task ConfirmarAgendamentoAsync(long id);
+        Task CancelarAgendamentoAsync(long id, string? motivo);
+        Task ConcluirAgendamentoAsync(long id, ConcluirAgendamentoDTO dados);
+        Task<PagamentoLinkRetornoDTO> GerarLinkPagamentoAsync(long id);
+        Task<TapUrlRetornoDTO> ObterTapUrlAsync(long id, string metodo, int parcelas);
+        Task ProcessarTapCallbackAsync(TapCallbackDTO dados);
+        Task<AgendamentoPagamento?> ObterPagamentoPorAgendamentoAsync(long id);
     }
 }

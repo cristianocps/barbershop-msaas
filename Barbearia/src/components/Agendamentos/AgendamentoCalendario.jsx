@@ -12,8 +12,8 @@ import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { AgendamentosService } from '../../services/Agendamentos/AgendamentosService';
 import { ProfissionaisService } from '../../services/Configuracoes/ProfissionaisService';
 
-const HORA_INICIO = 8;
-const HORA_FIM = 20;
+const HORA_INICIO = 6;
+const HORA_FIM = 22;
 const SLOT_MINUTOS = 30;
 /** Altura em px de cada slot de 30 min — define a escala temporal do calendário */
 const ALTURA_SLOT = 48;
@@ -34,6 +34,14 @@ function pick(row, ...keys) {
 
 function toDate(value) {
     if (!value) return null;
+    // API devolve horário de Brasília sem offset (ex.: 2026-05-20T08:30:00)
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value) && !/[Z+-]\d{2}/.test(value)) {
+        const [datePart, timePart] = value.split('T');
+        const [y, m, d] = datePart.split('-').map(Number);
+        const [hh, mm, ss = '0'] = timePart.split(':');
+        const local = new Date(y, m - 1, d, Number(hh), Number(mm), Number(ss.split('.')[0]));
+        return Number.isNaN(local.getTime()) ? null : local;
+    }
     const d = new Date(value);
     return Number.isNaN(d.getTime()) ? null : d;
 }
@@ -93,8 +101,8 @@ export function AgendamentoCalendario({ onSelectAgendamento, onCreateAgendamento
             setLoading(true);
             setError(null);
 
-            const inicio = startOfDay(selectedDay);
-            const fim = addDays(inicio, 1);
+            const inicio = startOfDay(weekStart);
+            const fim = addDays(inicio, 7);
 
             const [profRes, calRes] = await Promise.all([
                 ProfissionaisService.carregarGrid({ value: '' }, 0, 100),
@@ -113,7 +121,7 @@ export function AgendamentoCalendario({ onSelectAgendamento, onCreateAgendamento
         } finally {
             setLoading(false);
         }
-    }, [selectedDay]);
+    }, [weekStart]);
 
     useEffect(() => {
         loadData();

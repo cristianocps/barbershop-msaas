@@ -152,6 +152,92 @@ namespace BarberShop.Areas.Agendamentos
             catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
         }
 
+        [HttpPost("{id}/confirmar")]
+        public async Task<JsonResult> Confirmar(long id)
+        {
+            try
+            {
+                await _agendamentoServicos.ConfirmarAgendamentoAsync(id).ConfigureAwait(false);
+                return await ResponseJson(ResponseJsonTypes.Success);
+            }
+            catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }
+            catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
+        }
+
+        [HttpPost("{id}/cancelar")]
+        public async Task<JsonResult> Cancelar(long id, [FromBody] CancelarAgendamentoDTO? dados)
+        {
+            try
+            {
+                await _agendamentoServicos.CancelarAgendamentoAsync(id, dados?.Motivo).ConfigureAwait(false);
+                return await ResponseJson(ResponseJsonTypes.Success);
+            }
+            catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }
+            catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
+        }
+
+        [HttpPost("{id}/concluir")]
+        public async Task<JsonResult> Concluir(long id, [FromBody] ConcluirAgendamentoDTO dados)
+        {
+            try
+            {
+                if (dados == null) throw new TratamentoExcecao("Dados de pagamento obrigatórios.");
+                await _agendamentoServicos.ConcluirAgendamentoAsync(id, dados).ConfigureAwait(false);
+                return await ResponseJson(ResponseJsonTypes.Success);
+            }
+            catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }
+            catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
+        }
+
+        [HttpPost("{id}/pagamento/link")]
+        public async Task<JsonResult> GerarLinkPagamento(long id)
+        {
+            try
+            {
+                var result = await _agendamentoServicos.GerarLinkPagamentoAsync(id).ConfigureAwait(false);
+                return await ResponseJson(ResponseJsonTypes.Success, "", result).ConfigureAwait(false);
+            }
+            catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }
+            catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
+        }
+
+        [HttpGet("{id}/pagamento/tap-url")]
+        public async Task<JsonResult> ObterTapUrl(long id, [FromQuery] string metodo = "credit", [FromQuery] int parcelas = 1)
+        {
+            try
+            {
+                var result = await _agendamentoServicos.ObterTapUrlAsync(id, metodo, parcelas).ConfigureAwait(false);
+                return await ResponseJson(ResponseJsonTypes.Success, "", result).ConfigureAwait(false);
+            }
+            catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }
+            catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
+        }
+
+        [AllowAnonymous]
+        [HttpPost("tap-callback")]
+        public async Task<JsonResult> TapCallback([FromBody] TapCallbackDTO dados)
+        {
+            try
+            {
+                await _agendamentoServicos.ProcessarTapCallbackAsync(dados).ConfigureAwait(false);
+                return await ResponseJson(ResponseJsonTypes.Success);
+            }
+            catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }
+            catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
+        }
+
+        [HttpGet("{id}/pagamento")]
+        public async Task<JsonResult> ObterPagamento(long id)
+        {
+            try
+            {
+                var result = await _agendamentoServicos.ObterPagamentoPorAgendamentoAsync(id).ConfigureAwait(false);
+                return await ResponseJson(ResponseJsonTypes.Success, "", result).ConfigureAwait(false);
+            }
+            catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }
+            catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
+        }
+
         [HttpGet("carregar-calendario")]
         public async Task<JsonResult> CarregarCalendario([FromQuery] DateTime inicio, [FromQuery] DateTime fim)
         {

@@ -2,6 +2,8 @@ using BarberShop.AbstractFactory;
 using BarberShop.Configuracoes;
 using BarberShop.Data;
 using BarberShop.Data.Seed;
+using BarberShop.Infraestrutura.Pagamentos;
+using BarberShop.Middleware;
 using BarberShop.Dominio.Interfaces.Base;
 using Gestao_Winsiga.Apresentacao.AbstractFactory;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -168,6 +170,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(options => { options.AddPolicy("Administrador", policy => policy.RequireRole("Admin")); });
 builder.Services.AddAuthorization(options => { options.AddPolicy("Usuario", policy => policy.RequireRole("User")); });
 
+builder.Services.Configure<InfinitePaySettings>(builder.Configuration.GetSection(InfinitePaySettings.SectionName));
+builder.Services.Configure<PlataformaBillingSettings>(builder.Configuration.GetSection(PlataformaBillingSettings.SectionName));
 builder.Services.AddHttpClient();
 builder.Services.RegistrarServicosGestao();
 
@@ -252,6 +256,7 @@ app.UseCors("PermitirFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAssinaturaPlataforma();
 
 app.MapControllers();
 

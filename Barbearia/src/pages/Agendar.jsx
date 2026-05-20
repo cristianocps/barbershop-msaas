@@ -34,6 +34,7 @@ function App() {
   const [customer, setCustomer] = useState({ name: '', phone: '', notes: '' });
   const [chavesPix, setChavesPix] = useState([]);
   const [comprovanteBase64, setComprovanteBase64] = useState(null);
+  const [indisponivel, setIndisponivel] = useState(false);
 
   // 1. Carregar Dados Iniciais (Empresa, Serviços, Profissionais)
   useEffect(() => {
@@ -67,8 +68,12 @@ function App() {
         setProfissionais(profissionaisRes?.data || profissionaisRes?.Data || profissionaisRes?.dados || profissionaisRes || []);
         setChavesPix(pixRes?.data || pixRes?.Data || pixRes?.dados || pixRes || []);
       } catch (err) {
-        toast.error(err.message || 'Erro ao carregar dados da barbearia');
-        // navigate('/login');
+        if (err?.status === 402) {
+          setIndisponivel(true);
+          setEmpresa(null);
+        } else {
+          toast.error(err.message || 'Erro ao carregar dados da barbearia');
+        }
       } finally {
         setLoading(false);
       }
@@ -235,6 +240,20 @@ function App() {
         <div className="text-center">
           <Loader2 className="animate-spin text-blue-600 mx-auto mb-4" size={48} />
           <h2 className="text-xl font-semibold text-gray-700">Carregando Vitrine...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (indisponivel) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50 p-6">
+        <div className="text-center max-w-md">
+          <Scissors className="text-gray-300 mx-auto mb-4" size={64} />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Temporariamente indisponível</h2>
+          <p className="text-gray-600 mb-6">
+            Esta barbearia está com a assinatura da plataforma em atraso. O agendamento online voltará em breve.
+          </p>
         </div>
       </div>
     );

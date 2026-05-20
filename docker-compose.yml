@@ -64,8 +64,29 @@ services:
       JwtSettings__Issuer: Barbershop_backend
       JwtSettings__Audience: BarbershopApp
       JwtSettings__ExpirationInMinutes: "1440"
+      # Usuários criados/atualizados no seed (idempotente a cada startup)
+      Seed__AdminEmail: ${SEED_ADMIN_EMAIL:-admin@demo.barbershop}
+      Seed__AdminPassword: ${SEED_ADMIN_PASSWORD:-Admin@123}
+      Seed__DesenvolvedorEmail: ${SEED_DESENVOLVEDOR_EMAIL:-dev@barbershop.platform}
+      Seed__DesenvolvedorPassword: ${SEED_DESENVOLVEDOR_PASSWORD:-Dev@123}
       # Origens extras para CORS alem das fixas no Program.cs
       CorsOrigins: "http://app.barbershopp.com.br,https://app.barbershopp.com.br"
+      # Infinite Pay (checkout link + Tap)
+      InfinitePay__Handle: ${INFINITEPAY_HANDLE:-}
+      InfinitePay__CheckoutApiUrl: ${INFINITEPAY_CHECKOUT_API_URL:-https://api.checkout.infinitepay.io}
+      InfinitePay__WebhookSecret: ${INFINITEPAY_WEBHOOK_SECRET:-}
+      InfinitePay__RedirectUrlBase: ${INFINITEPAY_REDIRECT_URL_BASE:-https://app.barbershopp.com.br/agendamentos/pagamento-retorno}
+      InfinitePay__WebhookUrl: ${INFINITEPAY_WEBHOOK_URL:-https://app.barbershopp.com.br/api/webhooks/infinitepay}
+      InfinitePay__TapResultUrlBase: ${INFINITEPAY_TAP_RESULT_URL_BASE:-https://app.barbershopp.com.br/agendamentos/tap-retorno}
+      InfinitePay__AppClientReferrer: ${INFINITEPAY_APP_CLIENT_REFERRER:-BarberShop}
+      # Cobrança da plataforma (assinatura SaaS)
+      PlataformaBilling__Handle: ${PLATAFORMA_INFINITEPAY_HANDLE:-}
+      PlataformaBilling__CheckoutApiUrl: ${PLATAFORMA_INFINITEPAY_CHECKOUT_API_URL:-https://api.checkout.infinitepay.io}
+      PlataformaBilling__WebhookSecret: ${PLATAFORMA_INFINITEPAY_WEBHOOK_SECRET:-}
+      PlataformaBilling__RedirectUrlBase: ${PLATAFORMA_INFINITEPAY_REDIRECT_URL_BASE:-https://app.barbershopp.com.br/assinatura/retorno}
+      PlataformaBilling__WebhookUrl: ${PLATAFORMA_INFINITEPAY_WEBHOOK_URL:-https://app.barbershopp.com.br/api/webhooks/infinitepay/plataforma}
+      PlataformaBilling__MensalidadeCentavos: ${PLATAFORMA_MENSALIDADE_CENTAVOS:-9900}
+      PlataformaBilling__TrialDias: ${PLATAFORMA_TRIAL_DIAS:-14}
     depends_on:
       postgres:
         condition: service_healthy

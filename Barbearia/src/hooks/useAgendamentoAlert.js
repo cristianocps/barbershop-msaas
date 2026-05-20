@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AgendamentosService } from '../services/Agendamentos/AgendamentosService';
 import { useAuth } from '../contexts/AuthContext';
+import { useAssinatura } from '../contexts/AssinaturaContext';
 
 export function useAgendamentoAlert() {
     const { isAuthenticated } = useAuth();
+    const { bloqueado, isDesenvolvedor } = useAssinatura();
     const [newAgendamentos, setNewAgendamentos] = useState([]);
     const lastNotifiedIdRef = useRef(parseInt(localStorage.getItem('last_notified_id') || '0'));
     const pollInterval = useRef(null);
 
     const checkNewAgendamentos = useCallback(async () => {
-        if (!isAuthenticated) return;
+        if (!isAuthenticated || (bloqueado && !isDesenvolvedor)) return;
 
         try {
             const res = await AgendamentosService.getPendentesHoje();
@@ -34,7 +36,7 @@ export function useAgendamentoAlert() {
         } catch (err) {
             console.error('[Poll] Erro ao sincronizar alertas:', err);
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, bloqueado, isDesenvolvedor]);
 
     const playNotificationSound = () => {
         try {
@@ -47,7 +49,7 @@ export function useAgendamentoAlert() {
     };
 
     useEffect(() => {
-        if (isAuthenticated) {
+        if (isAuthenticated && !(bloqueado && !isDesenvolvedor)) {
             // Executa imediatamente ao carregar
             checkNewAgendamentos();
             
@@ -58,7 +60,7 @@ export function useAgendamentoAlert() {
         return () => {
             if (pollInterval.current) clearInterval(pollInterval.current);
         };
-    }, [isAuthenticated, checkNewAgendamentos]);
+    }, [isAuthenticated, bloqueado, isDesenvolvedor, checkNewAgendamentos]);
 
     const removeAlert = (id) => {
         setNewAgendamentos(prev => prev.filter(a => (a.id || a.Id || a.ID) !== id));

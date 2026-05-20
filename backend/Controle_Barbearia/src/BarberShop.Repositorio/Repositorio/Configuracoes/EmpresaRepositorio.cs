@@ -5,7 +5,10 @@ using BarberShop.Dominio.Entidade.Reflection.Texto;
 using BarberShop.Dominio.Enuns;
 using BarberShop.Dominio.Interfaces.Base;
 using BarberShop.Dominio.Interfaces.Repositorios.Configuracoes;
+using BarberShop.Dominio.Interfaces.Repositorios.Plataforma;
+using BarberShop.Infraestrutura.Pagamentos;
 using BarberShop.Infraestrutura.padronizar;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -22,13 +25,23 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
         private readonly IConfiguration? _configuration;
         private readonly TransferenciaIdentidadeDTO _identidade;
         private readonly IDbConnectionFactory _dbConnectionFactory;
+        private readonly IPlataformaAssinaturaRepositorio? _assinaturaRepositorio;
+        private readonly PlataformaBillingSettings? _plataformaBilling;
 
-        public EmpresaRepositorio(IDbConnectionFactory dbConnectionFactory, IUser? accessor, IConfiguration? configuration, TransferenciaIdentidadeDTO identidade)
+        public EmpresaRepositorio(
+            IDbConnectionFactory dbConnectionFactory,
+            IUser? accessor,
+            IConfiguration? configuration,
+            TransferenciaIdentidadeDTO identidade,
+            IPlataformaAssinaturaRepositorio? assinaturaRepositorio = null,
+            IOptions<PlataformaBillingSettings>? plataformaBilling = null)
         {
             _dbConnectionFactory = dbConnectionFactory;
             _accessor = accessor;
             _configuration = configuration;
             _identidade = identidade;
+            _assinaturaRepositorio = assinaturaRepositorio;
+            _plataformaBilling = plataformaBilling?.Value;
         }
 
         public async Task<long> AlterarEmpresas(Empresa dados)
@@ -48,7 +61,9 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                             endereco = @Endereco,
                             logo_data = @LogoData, -- Removido o ::text
                             status = @Status,
-                            slug = @Slug
+                            slug = @Slug,
+                            infinitepay_handle = @InfinitepayHandle,
+                            infinitepay_webhook_secret = COALESCE(@InfinitepayWebhookSecret, infinitepay_webhook_secret)
                         WHERE 
                             id = @ID
                             AND idusuario = {_identidade.IdUsuarioLogado}
@@ -58,9 +73,11 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                 {
                     _query = $@"
                         INSERT INTO public.empresas ( 
-                            idusuario, descricao, dtcriacao, status, cidade, telefone, endereco, logo_data, slug
+                            idusuario, descricao, dtcriacao, status, cidade, telefone, endereco, logo_data, slug,
+                            infinitepay_handle, infinitepay_webhook_secret
                         ) VALUES (
-                            {_identidade.IdUsuarioLogado}, @Descricao, @DtCriacao, 1, @Cidade, @Telefone, @Endereco, @LogoData, @Slug
+                            {_identidade.IdUsuarioLogado}, @Descricao, @DtCriacao, 1, @Cidade, @Telefone, @Endereco, @LogoData, @Slug,
+                            @InfinitepayHandle, @InfinitepayWebhookSecret
                         )
                         RETURNING id::bigint;";
                 }
@@ -73,6 +90,13 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                         _dbConnectionFactory,
                         _result,
                         _identidade.IdUsuarioLogado ?? 0).ConfigureAwait(false);
+
+                    if (_assinaturaRepositorio != null)
+                    {
+                        var trialDias = _plataformaBilling?.TrialDias ?? 14;
+                        var valor = _plataformaBilling?.MensalidadeCentavos ?? 9900;
+                        await _assinaturaRepositorio.CriarAssinaturaInicialAsync(_result, trialDias, valor).ConfigureAwait(false);
+                    }
                 }
 
                 // Se for um novo cadastro, vincula o usuário criador à nova empresa automaticamente
@@ -159,7 +183,8 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                     SELECT 
                         id AS ID, idusuario AS IdUsuario,
                         descricao AS Descricao, dtcriacao AS DtCriacao, status AS Status,
-                        cidade AS Cidade, telefone AS Telefone, endereco AS Endereco, logo_data AS LogoData, slug AS Slug
+                        cidade AS Cidade, telefone AS Telefone, endereco AS Endereco, logo_data AS LogoData, slug AS Slug,
+                        infinitepay_handle AS InfinitepayHandle, infinitepay_webhook_secret AS InfinitepayWebhookSecret
                     FROM public.empresas
                     WHERE id = @IdItem
                       AND (idusuario = {_identidade.IdUsuarioLogado} OR id = {_identidade.IdEmpresaLogado})
@@ -221,6 +246,103 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
             {
                 throw new TratamentoExcecao(ex.Message.Traduzir());
             }
+        }
+
+        public async Task<EmpresaInfinitePayConfigDTO?> ObterInfinitePayConfigAsync(long idEmpresa)
+        {
+            var sql = $@"
+                SELECT
+                    id AS IdEmpresa,
+                    descricao AS DescricaoEmpresa,
+                    COALESCE(infinitepay_handle, '') AS Handle,
+                    COALESCE(infinitepay_webhook_secret, '') AS WebhookSecret
+                FROM public.empresas
+                WHERE id = @IdEmpresa
+                  AND (idusuario = {_identidade.IdUsuarioLogado} OR id = {_identidade.IdEmpresaLogado});";
+
+            var config = await _dbConnectionFactory.QuerySingleOrDefaultAsync<EmpresaInfinitePayConfigDTO>(sql, new { IdEmpresa = idEmpresa })
+                .ConfigureAwait(false);
+
+            if (config == null)
+                return null;
+
+            if (string.IsNullOrWhiteSpace(config.WebhookSecret) && !string.IsNullOrWhiteSpace(config.Handle))
+                config.WebhookSecret = await RegenerarInfinitePayWebhookSecretAsync(idEmpresa).ConfigureAwait(false);
+
+            return config;
+        }
+
+        public async Task SalvarInfinitePayConfigAsync(long idEmpresa, string handle)
+        {
+            var handleTrim = (handle ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(handleTrim))
+                throw new TratamentoExcecao("Informe o Infinite Tag (handle) da loja.");
+
+            var sql = $@"
+                UPDATE public.empresas
+                SET infinitepay_handle = @Handle
+                WHERE id = @IdEmpresa
+                  AND (idusuario = {_identidade.IdUsuarioLogado} OR id = {_identidade.IdEmpresaLogado});";
+
+            var rows = await _dbConnectionFactory.ExecuteAsync(sql, new
+            {
+                IdEmpresa = idEmpresa,
+                Handle = handleTrim,
+            }).ConfigureAwait(false);
+
+            if (rows == 0)
+                throw new TratamentoExcecao("Empresa não encontrada ou sem permissão.");
+
+            await GarantirWebhookSecretAsync(idEmpresa).ConfigureAwait(false);
+        }
+
+        public async Task<string> RegenerarInfinitePayWebhookSecretAsync(long idEmpresa)
+        {
+            var secret = GerarWebhookSecret();
+            await AtualizarWebhookSecretAsync(idEmpresa, secret).ConfigureAwait(false);
+            return secret;
+        }
+
+        private async Task GarantirWebhookSecretAsync(long idEmpresa)
+        {
+            var sql = $@"
+                SELECT COALESCE(infinitepay_webhook_secret, '') AS Secret
+                FROM public.empresas
+                WHERE id = @IdEmpresa
+                  AND (idusuario = {_identidade.IdUsuarioLogado} OR id = {_identidade.IdEmpresaLogado});";
+
+            var atual = await _dbConnectionFactory.QuerySingleOrDefaultAsync<string>(sql, new { IdEmpresa = idEmpresa })
+                .ConfigureAwait(false);
+
+            if (!string.IsNullOrWhiteSpace(atual))
+                return;
+
+            await AtualizarWebhookSecretAsync(idEmpresa, GerarWebhookSecret()).ConfigureAwait(false);
+        }
+
+        private async Task AtualizarWebhookSecretAsync(long idEmpresa, string secret)
+        {
+            var sql = $@"
+                UPDATE public.empresas
+                SET infinitepay_webhook_secret = @WebhookSecret
+                WHERE id = @IdEmpresa
+                  AND (idusuario = {_identidade.IdUsuarioLogado} OR id = {_identidade.IdEmpresaLogado});";
+
+            var rows = await _dbConnectionFactory.ExecuteAsync(sql, new
+            {
+                IdEmpresa = idEmpresa,
+                WebhookSecret = secret,
+            }).ConfigureAwait(false);
+
+            if (rows == 0)
+                throw new TratamentoExcecao("Empresa não encontrada ou sem permissão.");
+        }
+
+        private static string GerarWebhookSecret()
+        {
+            var bytes = new byte[32];
+            System.Security.Cryptography.RandomNumberGenerator.Fill(bytes);
+            return Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
         }
 
         public void Dispose()

@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { CalendarDays, Edit2, XCircle, Check, List, LayoutGrid } from 'lucide-react';
+import { CalendarDays, List, LayoutGrid, Check, XCircle } from 'lucide-react';
 import { AgendamentoCalendario } from '../components/Agendamentos/AgendamentoCalendario';
+import { AgendamentoAcoes } from '../components/Agendamentos/AgendamentoAcoes';
+import { CancelarAgendamentoModal } from '../components/Agendamentos/CancelarAgendamentoModal';
+import { ConcluirAgendamentoModal } from '../components/Agendamentos/ConcluirAgendamentoModal';
 import { DataGrid } from '../components/UI/DataGrid';
 import { PageHeader, PageSearch } from '../components/UI/PageHeader';
 import { FormModal } from '../components/UI/FormModal';
 import { AgendamentoForm, AgendamentoFormDefault } from '../components/forms/AgendamentoForm';
-import { AgendamentosService } from '../services/Agendamentos/AgendamentosService';
+import { AgendamentosService, TIPO_PAGAMENTO_LABEL } from '../services/Agendamentos/AgendamentosService';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirm } from '../components/UI/ConfirmModal';
 
@@ -27,8 +30,17 @@ export function Agendamentos() {
     const [modalLoading, setModalLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState(AgendamentoFormDefault());
+    const [cancelOpen, setCancelOpen] = useState(false);
+    const [concluirOpen, setConcluirOpen] = useState(false);
+    const [actionRow, setActionRow] = useState(null);
+    const [actionLoading, setActionLoading] = useState(false);
 
     const isEditing = (form.id ?? 0) !== 0;
+
+    const refreshAll = () => {
+        loadData();
+        setCalendarKey((k) => k + 1);
+    };
 
     const loadData = useCallback(async () => {
         try {
@@ -161,23 +173,62 @@ export function Agendamentos() {
         }
     };
 
-    const handleInativar = (id) => {
-        askConfirm({
-            title: 'Cancelar agendamento',
-            message: 'Deseja cancelar/inativar este agendamento? Esta ação poderá ser revertida pelo administrador.',
-            type: 'warning',
-            confirmText: 'Cancelar agendamento',
-            onConfirm: async () => {
-                try {
-                    await AgendamentosService.alterarStatus(id, 0);
-                    toast.success('Agendamento cancelado com sucesso.');
-                    loadData();
-                    setCalendarKey((k) => k + 1);
-                } catch (err) {
-                    toast.error(err.message || 'Erro ao cancelar.');
-                }
-            },
-        });
+    const openCancelar = (row) => {
+        setActionRow(row);
+        setCancelOpen(true);
+    };
+
+    const openConcluir = (row) => {
+        setActionRow(row);
+        setConcluirOpen(true);
+    };
+
+    const handleConfirmar = async (row) => {
+        const id = row?.id || row?.ID || row?.Id;
+        try {
+            await AgendamentosService.confirmar(id);
+            toast.success('Agendamento confirmado!');
+            refreshAll();
+        } catch (err) {
+            toast.error(err.message || 'Erro ao confirmar.');
+        }
+    };
+
+    const handleCancelarSubmit = async (motivo) => {
+        const id = actionRow?.id || actionRow?.ID || actionRow?.Id;
+        setActionLoading(true);
+        try {
+            await AgendamentosService.cancelar(id, motivo);
+            toast.success('Agendamento cancelado.');
+            setCancelOpen(false);
+            setActionRow(null);
+            refreshAll();
+        } catch (err) {
+            toast.error(err.message || 'Erro ao cancelar.');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleVerPagamento = async (row) => {
+        const id = row?.id || row?.ID || row?.Id;
+        try {
+            const res = await AgendamentosService.obterPagamento(id);
+            const p = res?.Data ?? res?.data ?? res;
+            const tipoNum = p?.tipoPagamento ?? p?.TipoPagamento;
+            const tipoLabel = TIPO_PAGAMENTO_LABEL[tipoNum] ?? tipoNum ?? '–';
+            const msg = p
+                ? `Tipo: ${tipoLabel}\nValor: R$ ${Number(p.valor ?? p.Valor ?? 0).toFixed(2).replace('.', ',')}\nGateway: ${p.gateway ?? p.Gateway ?? '-'}`
+                : 'Nenhum pagamento registrado.';
+            askConfirm({ title: 'Pagamento', message: msg, type: 'success', confirmText: 'Fechar', cancelText: '', onConfirm: () => {} });
+        } catch (err) {
+            toast.error(err.message || 'Erro ao carregar pagamento.');
+        }
+    };
+
+    const handleVerMotivo = (row) => {
+        const motivo = row?.motivoCancelamento ?? row?.MotivoCancelamento ?? 'Não informado.';
+        askConfirm({ title: 'Motivo do cancelamento', message: motivo, type: 'warning', confirmText: 'Fechar', cancelText: '', onConfirm: () => {} });
     };
 
     // Helpers
@@ -231,33 +282,15 @@ export function Agendamentos() {
         },
         {
             label: 'Ações', align: 'right', render: (row) => (
-                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                    <button title="Editar" onClick={() => openEdit(row)} style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(246,176,1,0.1)', color: '#e09800', border: '1px solid rgba(246,176,1,0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Edit2 size={14} />
-                    </button>
-                    {(row?.comprovantePix || row?.ComprovantePix) ? (
-                        <button title="Ver Comprovante PIX" onClick={() => {
-                            const img = row?.comprovantePix || row?.ComprovantePix;
-                            askConfirm({
-                                title: 'Comprovante PIX',
-                                message: <img src={img} alt="Comprovante" style={{ width: '100%', borderRadius: '8px', maxHeight: '70vh', objectFit: 'contain' }} />,
-                                type: 'success',
-                                confirmText: 'Fechar',
-                                cancelText: '',
-                                onConfirm: () => {}
-                            });
-                        }} style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(34,197,94,0.08)', color: '#16a34a', border: '1px solid rgba(34,197,94,0.15)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <CalendarDays size={14} />
-                        </button>
-                    ) : (
-                        <div title="Pagamento Presencial" style={{ width: '34px', height: '34px', borderRadius: '9px', background: '#f3f4f6', color: '#9ca3af', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.6 }}>
-                           <XCircle size={14} />
-                        </div>
-                    )}
-                    <button title="Cancelar" onClick={() => handleInativar(row?.id || row?.ID || row?.Id)} style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.15)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <XCircle size={14} />
-                    </button>
-                </div>
+                <AgendamentoAcoes
+                    row={row}
+                    onEdit={openEdit}
+                    onConfirmar={handleConfirmar}
+                    onConcluir={openConcluir}
+                    onCancelar={openCancelar}
+                    onVerPagamento={handleVerPagamento}
+                    onVerMotivo={handleVerMotivo}
+                />
             )
         }
     ];
@@ -292,32 +325,15 @@ export function Agendamentos() {
                         )}
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <button onClick={() => openEdit(row)} style={{ flex: 1, minWidth: '80px', padding: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'rgba(246,176,1,0.1)', color: '#e09800', borderRadius: '10px', fontWeight: 700, border: '1px solid rgba(246,176,1,0.2)', cursor: 'pointer', fontSize: '0.825rem' }}>
-                        <Edit2 size={13} /> Editar
-                    </button>
-                    {hasPix ? (
-                        <button onClick={() => {
-                            askConfirm({
-                                title: 'Comprovante PIX',
-                                message: <img src={hasPix} alt="Comprovante" style={{ width: '100%', borderRadius: '8px' }} />,
-                                type: 'success',
-                                confirmText: 'Fechar',
-                                cancelText: '',
-                                onConfirm: () => {}
-                            });
-                        }} style={{ flex: 1, minWidth: '80px', padding: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'rgba(34,197,94,0.08)', color: '#16a34a', borderRadius: '10px', fontWeight: 700, border: '1px solid rgba(34,197,94,0.15)', cursor: 'pointer', fontSize: '0.825rem' }}>
-                            <CalendarDays size={13} /> Ver Pix
-                        </button>
-                    ) : (
-                        <button disabled style={{ flex: 1, minWidth: '80px', padding: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#f3f4f6', color: '#9ca3af', borderRadius: '10px', fontWeight: 700, border: '1px solid #e5e7eb', cursor: 'not-allowed', fontSize: '0.825rem', opacity: 0.6 }}>
-                            <XCircle size={13} /> Sem Pix
-                        </button>
-                    )}
-                    <button onClick={() => handleInativar(row?.id || row?.ID || row?.Id)} style={{ flex: 1, minWidth: '80px', padding: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'rgba(239,68,68,0.08)', color: '#ef4444', borderRadius: '10px', fontWeight: 700, border: '1px solid rgba(239,68,68,0.15)', cursor: 'pointer', fontSize: '0.825rem' }}>
-                        <XCircle size={13} /> Cancelar
-                    </button>
-                </div>
+                <AgendamentoAcoes
+                    row={row}
+                    onEdit={openEdit}
+                    onConfirmar={handleConfirmar}
+                    onConcluir={openConcluir}
+                    onCancelar={openCancelar}
+                    onVerPagamento={handleVerPagamento}
+                    onVerMotivo={handleVerMotivo}
+                />
             </div>
         );
     };
@@ -392,6 +408,18 @@ export function Agendamentos() {
             >
                 <AgendamentoForm form={form} onChange={setForm} />
             </FormModal>
+            <CancelarAgendamentoModal
+                open={cancelOpen}
+                onClose={() => { setCancelOpen(false); setActionRow(null); }}
+                onConfirm={handleCancelarSubmit}
+                loading={actionLoading}
+            />
+            <ConcluirAgendamentoModal
+                open={concluirOpen}
+                agendamento={actionRow}
+                onClose={() => { setConcluirOpen(false); setActionRow(null); }}
+                onSuccess={refreshAll}
+            />
             {confirmModal}
         </div>
     );

@@ -15,5 +15,8 @@ namespace BarberShop.Dominio.Interfaces.Repositorios.Configuracoes
         Task<IEnumerable<DataSelect2DTO>> CarregarComboStatusEmpresas(string search, int page, int? length = 10);
         Task<RetornoGridPaginado<Empresa>> CarregarGridEmpresas(DataTableSearch search, int start, int draw, int? length = 10);
         Task<Empresa> Editar(long idItem);
+        Task<EmpresaInfinitePayConfigDTO?> ObterInfinitePayConfigAsync(long idEmpresa);
+        Task SalvarInfinitePayConfigAsync(long idEmpresa, string handle);
+        Task<string> RegenerarInfinitePayWebhookSecretAsync(long idEmpresa);
     }
 }

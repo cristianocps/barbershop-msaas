@@ -3,6 +3,7 @@ using BarberShop.Dominio.Entidade.Configuracoes;
 using BarberShop.Dominio.Entidade.DTOs;
 using BarberShop.Dominio.Entidade.Reflection.Texto;
 using BarberShop.Dominio.Enuns;
+using BarberShop.Dominio.Helpers;
 using BarberShop.Dominio.Interfaces.Base;
 using BarberShop.Dominio.Interfaces.Repositorios.Agendamentos;
 using BarberShop.Infraestrutura.padronizar;
@@ -288,6 +289,8 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                         (@IdEmpresa, 0, @IdCliente, @IdProfissional, @Descricao, @Telefone, @Observacao, @DtAgendamento, NOW(), 0, @ComprovantePix)
                     RETURNING id;";
 
+                var dtAgendamentoUtc = AgendamentoDateTimeHelper.ToStorageUtc(dados.DtAgendamento);
+
                 var _idAgendamento = await _dbConnectionFactory.QuerySingleOrDefaultAsync<long>(
                     _queryAgendamento, new
                     {
@@ -297,7 +300,7 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                         Descricao      = _descricao.VarcharToSQL(),
                         Telefone       = _telefoneClean,
                         Observacao     = dados.Observacao ?? "",
-                        DtAgendamento  = dados.DtAgendamento,
+                        DtAgendamento  = dtAgendamentoUtc,
                         ComprovantePix = string.IsNullOrWhiteSpace(dados.ComprovantePix) ? null : dados.ComprovantePix
                     });
 
@@ -331,6 +334,27 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                         WHERE ai.idagendamento = @IdAgendamento
                     ), 30)
                     WHERE a.id = @IdAgendamento;", new { IdAgendamento = _idAgendamento });
+
+                var valorTotal = dados.Servicos.Sum(s => s.ValorCobrado);
+                if (!string.IsNullOrWhiteSpace(dados.ComprovantePix))
+                {
+                    await _dbConnectionFactory.ExecuteAsync(@"
+                        INSERT INTO public.agendamento_pagamentos (
+                            idempresa, idagendamento, tipo_pagamento, valor, gateway,
+                            gateway_order_nsu, gateway_status, comprovante_url, dtconfirmacao
+                        ) VALUES (
+                            @IdEmpresa, @IdAgendamento, 1, @Valor, 'manual',
+                            @OrderNsu, 'paid', @Comprovante, NOW()
+                        );",
+                        new
+                        {
+                            dados.IdEmpresa,
+                            IdAgendamento = _idAgendamento,
+                            Valor = valorTotal,
+                            OrderNsu = $"agendamento-{_idAgendamento}",
+                            Comprovante = dados.ComprovantePix
+                        });
+                }
 
                 // ── 5.4 Busca nome do profissional para montar o retorno ──
                 var _queryProfissional = @" SELECT descricao, telefone FROM public.profissionais  WHERE id = @Id LIMIT 1;";

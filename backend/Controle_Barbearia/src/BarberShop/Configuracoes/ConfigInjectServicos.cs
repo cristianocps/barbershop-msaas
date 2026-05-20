@@ -12,11 +12,17 @@ using BarberShop.Dominio.Interfaces.Servicos.Acessos;
 using BarberShop.Dominio.Interfaces.Servicos.Agendamentos;
 using BarberShop.Dominio.Interfaces.Servicos.Basico;
 using BarberShop.Dominio.Interfaces.Servicos.Configuracoes;
+using BarberShop.Dominio.Interfaces.Repositorios.Plataforma;
+using BarberShop.Dominio.Interfaces.Servicos.Plataforma;
+using BarberShop.Aplicacao.Entidades.Plataforma;
+using BarberShop.Repositorio.Repositorio.Plataforma;
 using BarberShop.Repositorio.Repositorio.Acessos;
 using BarberShop.Repositorio.Repositorio.Agendamentos;
 using BarberShop.Repositorio.Repositorio.Basico;
 using BarberShop.Repositorio.Repositorio.Configuracoes;
 using BarberShop.Repositorio.Servicos;
+using BarberShop.Dominio.Interfaces.Pagamentos;
+using BarberShop.Infraestrutura.Pagamentos;
 using System.Diagnostics;
 
 namespace BarberShop.Configuracoes
@@ -53,6 +59,9 @@ namespace BarberShop.Configuracoes
             // Agendamentos
             services.AddScoped<IAgendamentoServicos, AgendamentoServicos>();
             services.AddScoped<IAgendamentoRepositorio, AgendamentosRepositorio>();
+            services.AddScoped<IFinanceiroServicos, FinanceiroServicos>();
+            services.AddScoped<IFinanceiroRepositorio, FinanceiroRepositorio>();
+            services.AddHttpClient<IInfinitePayCheckoutClient, InfinitePayCheckoutClient>();
 
             // Vitrine
             services.AddScoped<IVitrineServicos, VitrineServicos>();
@@ -78,6 +87,9 @@ namespace BarberShop.Configuracoes
             services.AddScoped<IDadosBancariosServicos, DadosBancariosServicos>();
             services.AddScoped<IDadosBancariosRepositorio, DadosBancariosRepositorio>();
 
+            // Plataforma (assinatura SaaS)
+            services.AddScoped<IPlataformaAssinaturaServicos, PlataformaAssinaturaServicos>();
+            services.AddScoped<IPlataformaAssinaturaRepositorio, PlataformaAssinaturaRepositorio>();
 
             #endregion
         }

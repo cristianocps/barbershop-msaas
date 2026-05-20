@@ -45,6 +45,15 @@ namespace BarberShop.Aplicacao.Entidades.Configuracoes
             return await _empresaRepositorio.Editar(idItem).ConfigureAwait(false);
         }
 
+        public Task<EmpresaInfinitePayConfigDTO?> ObterInfinitePayConfigAsync(long idEmpresa)
+            => _empresaRepositorio.ObterInfinitePayConfigAsync(idEmpresa);
+
+        public Task SalvarInfinitePayConfigAsync(long idEmpresa, SalvarEmpresaInfinitePayConfigDTO dados)
+            => _empresaRepositorio.SalvarInfinitePayConfigAsync(idEmpresa, dados.Handle);
+
+        public Task<string> RegenerarInfinitePayWebhookSecretAsync(long idEmpresa)
+            => _empresaRepositorio.RegenerarInfinitePayWebhookSecretAsync(idEmpresa);
+
 
         public void Dispose()
         {

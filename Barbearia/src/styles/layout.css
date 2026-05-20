@@ -313,3 +313,433 @@
   backdrop-filter: blur(6px);
   animation: fadeIn 0.2s ease;
 }
+
+/* Billing alert banner */
+.billing-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.billing-alert--warning {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+}
+
+.billing-alert--danger {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+}
+
+.billing-alert__content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.billing-alert__action {
+  white-space: nowrap;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+}
+
+.billing-alert__action:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Página de assinatura / pagamento da plataforma */
+.page-assinatura .assinatura-card {
+  max-width: 520px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--border-muted, #e5e7eb);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.assinatura-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.assinatura-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #6b7280);
+}
+
+.assinatura-info,
+.assinatura-valor {
+  color: var(--text-main, #111827);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.assinatura-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.assinatura-badge--trial { background: #fef3c7; color: #92400e; }
+.assinatura-badge--active { background: #dcfce7; color: #166534; }
+.assinatura-badge--overdue,
+.assinatura-badge--blocked { background: #fee2e2; color: #991b1b; }
+
+.assinatura-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+}
+
+.assinatura-hint {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted, #6b7280);
+  line-height: 1.5;
+}
+
+.assinatura-alerta {
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 0;
+  font-size: 0.9rem;
+}
+
+.assinatura-link-box {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border: 1px solid var(--border-muted, #e5e7eb);
+}
+
+.assinatura-link-box label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted, #6b7280);
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.assinatura-link-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.assinatura-link-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-muted, #e5e7eb);
+  font-size: 0.8rem;
+  color: var(--text-main, #111827);
+  background: #fff;
+}
+
+/* Botões da página de assinatura (alinhados ao PageHeader / filtros) */
+.assinatura-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.15rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s, filter 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+
+.assinatura-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.assinatura-btn--primary {
+  background: linear-gradient(135deg, #f6b001, #e09800);
+  color: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(246, 176, 1, 0.3);
+}
+
+.assinatura-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(246, 176, 1, 0.35);
+}
+
+.assinatura-btn--secondary {
+  background: linear-gradient(135deg, #1a1a2e, #0f3460);
+  color: #fff;
+}
+
+.assinatura-btn--secondary:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.assinatura-btn--outline {
+  background: #fff;
+  color: var(--text-main, #111827);
+  border: 1.5px solid var(--border-muted, #e5e7eb);
+}
+
+.assinatura-btn--outline:hover:not(:disabled) {
+  border-color: #f6b001;
+  background: var(--accent-light, #fffdf0);
+}
+
+.page-assinatura-retorno {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.page-assinatura-retorno__card {
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem 1.75rem;
+  border: 1px solid var(--border-muted, #e5e7eb);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.page-assinatura-retorno__card h1 {
+  font-size: 1.35rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-main, #111827);
+}
+
+.page-assinatura-retorno__card p {
+  color: var(--text-muted, #6b7280);
+  line-height: 1.6;
+}
+
+.page-assinatura-retorno__actions {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.page-assinatura-retorno__actions .assinatura-btn {
+  width: 100%;
+  max-width: 280px;
+}
+
+.assinatura-btn--sm {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 8px;
+}
+
+/* Modal admin (Plataforma Financeiro, etc.) */
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.admin-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--border-muted, #e5e7eb);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.admin-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-muted, #e5e7eb);
+}
+
+.admin-modal__header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--text-main, #111827);
+}
+
+.admin-modal__close {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.admin-modal__close:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.admin-modal__meta {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--text-muted, #6b7280);
+  margin-bottom: 1.25rem;
+}
+
+.admin-modal__meta strong {
+  color: var(--text-main, #111827);
+}
+
+.admin-modal__section-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #6b7280);
+  margin: 1.25rem 0 0.75rem;
+}
+
+.admin-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-form-field label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-form-input {
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-muted, #e5e7eb);
+  font-size: 0.875rem;
+  color: var(--text-main, #111827);
+  background: #f8f9fa;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-form-input:focus {
+  border-color: #f6b001;
+  box-shadow: 0 0 0 3px rgba(246, 176, 1, 0.15);
+  background: #fff;
+}
+
+.admin-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-muted, #e5e7eb);
+}
+
+.cobrancas-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.cobrancas-list li {
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  background: #f8f9fa;
+  border: 1px solid var(--border-muted, #e5e7eb);
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-main, #111827);
+}
+
+.cobrancas-list li.cobrancas-list__empty {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #6b7280);
+  text-align: center;
+  padding: 1rem;
+}
+
+.cobrancas-list__status {
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.cobrancas-list__status--paid { color: #166534; }
+.cobrancas-list__status--pending { color: #92400e; }
+
+.table-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.plataforma-status-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.plataforma-status-badge--trial { background: #fef3c7; color: #92400e; }
+.plataforma-status-badge--active { background: #dcfce7; color: #166534; }
+.plataforma-status-badge--overdue,
+.plataforma-status-badge--blocked { background: #fee2e2; color: #991b1b; }

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, CalendarDays, Settings, LogOut, Menu, X, Building2, Scissors, Star, CalendarClock, Landmark } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarDays, Settings, LogOut, Menu, X, Building2, Scissors, Star, CalendarClock, Landmark, DollarSign, Smartphone, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { getUserMaxPolicy, isPlataformaStaff } from '../../utils/userPolicy';
 
 const PolicyLevels = {
     'consulta': 1,
@@ -18,6 +19,7 @@ const navGroups = [
         items: [
             { path: '/', icon: <LayoutDashboard size={18} />, label: 'Dashboard', exact: true, minPolicy: 'usuario' },
             { path: '/agendamentos', icon: <CalendarDays size={18} />, label: 'Agendamentos', minPolicy: 'usuario' },
+            { path: '/financeiro', icon: <DollarSign size={18} />, label: 'Financeiro', minPolicy: 'gerente' },
         ]
     },
     {
@@ -35,13 +37,34 @@ const navGroups = [
         label: 'Configurações',
         items: [
             { path: '/configuracoes/dados-bancarios', icon: <Landmark size={18} />, label: 'Dados Bancários', minPolicy: 'admin' },
+            { path: '/configuracoes/infinite-pay', icon: <Smartphone size={18} />, label: 'Infinite Pay', minPolicy: 'gerente' },
+            { path: '/assinatura', icon: <DollarSign size={18} />, label: 'Assinatura', minPolicy: 'gerente' },
         ]
     },
 ];
 
-export function Sidebar() {
+const platformNavGroups = [
+    {
+        label: 'Plataforma',
+        items: [
+            { path: '/plataforma/financeiro', icon: <Shield size={18} />, label: 'Assinaturas', exact: false },
+        ],
+    },
+];
+
+const assinaturaNavItem = {
+    path: '/assinatura',
+    icon: <DollarSign size={18} />,
+    label: 'Assinatura / Pagamento',
+    exact: false,
+    minPolicy: 'gerente',
+};
+
+export function Sidebar({ bloqueado = false }) {
     const { logout, user, empresa } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
+    const staffPlataforma = isPlataformaStaff(user);
+    const groupsToRender = staffPlataforma ? platformNavGroups : navGroups;
 
     const close = () => setIsOpen(false);
 
@@ -80,7 +103,11 @@ export function Sidebar() {
                 {/* Brand */}
                 <div className="sidebar-logo">
                     <div className="header-logo-placeholder" style={{ borderRadius: '12px', fontSize: '1.3rem', overflow: 'hidden', padding: 0 }}>
-                        {empresa?.logoData ? (
+                        {staffPlataforma ? (
+                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                                <Shield size={22} />
+                            </span>
+                        ) : empresa?.logoData ? (
                             <img
                                 src={empresa.logoData}
                                 alt="Logo"
@@ -91,28 +118,30 @@ export function Sidebar() {
                         )}
                     </div>
                     <div className="sidebar-title">
-                        <h4>Admin Panel</h4>
-                        <p>{empresa?.descricao || localStorage.getItem('empresa_nome') || 'Barbearia MVP'}</p>
+                        <h4>{staffPlataforma ? 'BarberShop' : 'Admin Panel'}</h4>
+                        <p>{staffPlataforma ? 'Administração da plataforma' : (empresa?.descricao || localStorage.getItem('empresa_nome') || 'Barbearia MVP')}</p>
                     </div>
                 </div>
 
                 {/* Nav */}
                 <nav className="sidebar-nav">
-                    {navGroups.map((group) => {
-                        // Calcula o level máximo do usuário baseado nas roles injetadas no token
-                        let userMaxPolicy = 0;
-                        if (user?.roles && user.roles.length > 0) {
-                            user.roles.forEach(role => {
-                                // Normaliza do jeito que você tem no C#
-                                const norm = role.normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
-                                const level = PolicyLevels[norm] || 0;
-                                if (level > userMaxPolicy) {
-                                    userMaxPolicy = level;
-                                }
-                            });
-                        }
+                    {bloqueado ? (
+                        <div style={{ marginBottom: '0.75rem' }}>
+                            <div style={{ padding: '0.5rem 1rem 0.35rem', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.28)' }}>
+                                Pagamento
+                            </div>
+                            <NavLink
+                                to={assinaturaNavItem.path}
+                                onClick={close}
+                                className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                            >
+                                {assinaturaNavItem.icon}
+                                <span>{assinaturaNavItem.label}</span>
+                            </NavLink>
+                        </div>
+                    ) : groupsToRender.map((group) => {
+                        const userMaxPolicy = getUserMaxPolicy(user);
 
-                        // Filtra comparando se o userMaxPolicy atinge o level requerido do item
                         const filteredItems = group.items.filter(item => {
                             if (!item.minPolicy) return true; // sem regra exigida, qualquer um ve
                             const reqPolicyLevel = PolicyLevels[item.minPolicy.toLowerCase()] || 0;

@@ -163,11 +163,12 @@ function SkeletonValue() {
 
 function StatusBadge({ status }) {
     const map = {
+        0: { label: 'Pendente', bg: '#fef9c3', color: '#854d0e' },
         1: { label: 'Agendado', bg: '#dbeafe', color: '#1d4ed8' },
         2: { label: 'Concluído', bg: '#dcfce7', color: '#16a34a' },
         3: { label: 'Cancelado', bg: '#fee2e2', color: '#dc2626' },
     };
-    const s = map[status] || map[1];
+    const s = map[status] ?? map[0];
     return (
         <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700, background: s.bg, color: s.color, whiteSpace: 'nowrap', flexShrink: 0 }}>
             {s.label}
@@ -181,6 +182,8 @@ export function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [recent, setRecent] = useState([]);
     const [loadingRecent, setLoadingRecent] = useState(true);
+    const [pendentes, setPendentes] = useState([]);
+    const [loadingPendentes, setLoadingPendentes] = useState(true);
 
     const now = new Date();
     const hour = now.getHours();
@@ -214,6 +217,11 @@ export function Dashboard() {
             .then(res => setRecent(res?.data || res?.Data || []))
             .catch(() => setRecent([]))
             .finally(() => setLoadingRecent(false));
+
+        AgendamentosService.getPendentesHoje()
+            .then(res => setPendentes(res?.Data ?? res?.data ?? res ?? []))
+            .catch(() => setPendentes([]))
+            .finally(() => setLoadingPendentes(false));
     }, []);
 
     const stats = [
@@ -225,6 +233,7 @@ export function Dashboard() {
 
     const quickLinks = [
         { label: 'Agendamentos', icon: <CalendarDays size={18} />, color: '#3b82f6', to: '/agendamentos', minPolicy: 'usuario' },
+        { label: 'Financeiro', icon: <TrendingUp size={18} />, color: '#16a34a', to: '/financeiro', minPolicy: 'gerente' },
         { label: 'Usuários', icon: <Users size={18} />, color: '#8b5cf6', to: '/usuarios', minPolicy: 'admin' },
         { label: 'Serviços', icon: <Scissors size={18} />, color: '#f6b001', to: '/servicos', minPolicy: 'profissional' },
         { label: 'Barbearias', icon: <Building2 size={18} />, color: '#ef4444', to: '/empresas', minPolicy: 'profissional' },
@@ -281,6 +290,48 @@ export function Dashboard() {
                         </NavLink>
                     ))}
                 </div>
+
+                {/* Pendentes para confirmar */}
+                {userMaxPolicy >= 2 && (loadingPendentes || pendentes.length > 0) && (
+                    <div className="panel-card" style={{ marginBottom: '1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: '#fef9c3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <CalendarDays size={15} color="#854d0e" />
+                                </div>
+                                <h2 style={{ fontWeight: 800, fontSize: '0.975rem', color: '#111827', margin: 0 }}>
+                                    Pendentes para confirmar
+                                    {!loadingPendentes && pendentes.length > 0 && (
+                                        <span style={{ marginLeft: '8px', padding: '2px 8px', borderRadius: '12px', background: '#fef9c3', color: '#854d0e', fontSize: '0.75rem' }}>{pendentes.length}</span>
+                                    )}
+                                </h2>
+                            </div>
+                            <NavLink to="/agendamentos" style={{ fontSize: '0.78rem', fontWeight: 600, color: '#3b82f6', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                Ver todos <ArrowRight size={13} />
+                            </NavLink>
+                        </div>
+                        {loadingPendentes ? (
+                            <div className="skeleton-box" style={{ height: '58px', borderRadius: '14px' }} />
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {pendentes.slice(0, 5).map((ag, i) => (
+                                    <div key={ag.id ?? ag.Id ?? i} className="ag-item">
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <strong style={{ display: 'block', fontSize: '0.85rem', color: '#111827' }}>
+                                                {ag.nomeCliente ?? ag.NomeCliente ?? ag.descricao ?? ag.Descricao ?? 'Cliente'}
+                                            </strong>
+                                            <span style={{ fontSize: '0.72rem', color: '#9ca3af' }}>
+                                                {ag.servico ?? ag.Servico ?? ''}
+                                                {(ag.dtAgendamento || ag.DtAgendamento) ? ` · ${new Date(ag.dtAgendamento || ag.DtAgendamento).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}` : ''}
+                                            </span>
+                                        </div>
+                                        <StatusBadge status={0} />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* ── Bottom: Recentes + Quick Access ── */}
                 <div className="dash-bottom-grid">

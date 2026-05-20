@@ -143,6 +143,53 @@ const css = `
   transition: opacity 0.2s;
 }
 .page-search-btn:hover { opacity: 0.85; }
+
+/* Filtros de listagem (Financeiro, etc.) */
+.page-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-bottom: 1.25rem;
+  background: #fff;
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+.page-filters-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.page-filters-field label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.page-filters-field .page-search-input {
+  min-width: 160px;
+  width: auto;
+}
+.page-filters-btn {
+  padding: 0.65rem 1.25rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f6b001, #e09800);
+  color: #1a1a1a;
+  font-weight: 800;
+  font-size: 0.875rem;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(246,176,1,0.25);
+  transition: transform 0.15s, filter 0.2s;
+}
+.page-filters-btn:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
 `;
 
 export function PageHeader({ icon, title, subtitle, onNew, newLabel = 'Novo' }) {
