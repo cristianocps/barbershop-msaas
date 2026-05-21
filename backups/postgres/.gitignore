@@ -1,0 +1,4 @@
+# Dumps locais — não versionar
+*.dump
+*.sql
+*.gz

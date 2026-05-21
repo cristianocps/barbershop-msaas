@@ -1,0 +1,151 @@
+version: "3.9"
+
+services:
+
+  # ──────────────────────────────────────────────
+  # PostgreSQL 17  –  banco de dados principal
+  # O banco é criado automaticamente pelo container
+  # ──────────────────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres_barbershop
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qwas7845}
+      POSTGRES_DB: ${POSTGRES_DB:-barbershop_prod_db}
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - barbershop_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-barbershop_prod_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────
+  # Redis  –  cache / sessão
+  # nome do container = redis_barbershop
+  # ──────────────────────────────────────────────
+  redis_barbershop:
+    image: redis:7-alpine
+    container_name: redis_barbershop
+    restart: unless-stopped
+
+    volumes:
+      - redis_data:/data
+    networks:
+      - barbershop_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────
+  # Backend  –  ASP.NET Core 8
+  # Porta interna Kestrel: 8080
+  # SEM porta exposta externamente — o Nginx do frontend faz o proxy
+  # ──────────────────────────────────────────────
+  backend:
+    image: ghcr.io/cristianocps/barbershop-msaas-backend:latest
+    pull_policy: always
+    container_name: barbershop_backend
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      # Usa o nome do service 'postgres' como host (rede interna Docker)
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-barbershop_prod_db};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-qwas7845}"
+      JwtSettings__Secret: ${JWT_SECRET:-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+}
+      JwtSettings__Issuer: Barbershop_backend
+      JwtSettings__Audience: BarbershopApp
+      JwtSettings__ExpirationInMinutes: "1440"
+      # Usuários criados/atualizados no seed (idempotente a cada startup)
+      Seed__AdminEmail: ${SEED_ADMIN_EMAIL:-admin@demo.barbershop}
+      Seed__AdminPassword: ${SEED_ADMIN_PASSWORD:-Admin@123}
+      Seed__DesenvolvedorEmail: ${SEED_DESENVOLVEDOR_EMAIL:-dev@barbershop.platform}
+      Seed__DesenvolvedorPassword: ${SEED_DESENVOLVEDOR_PASSWORD:-Dev@123}
+      # Origens extras para CORS alem das fixas no Program.cs
+      CorsOrigins: "http://app.barbershopp.com.br,https://app.barbershopp.com.br"
+      # Infinite Pay (checkout link + Tap)
+      InfinitePay__Handle: ${INFINITEPAY_HANDLE:-}
+      InfinitePay__CheckoutApiUrl: ${INFINITEPAY_CHECKOUT_API_URL:-https://api.checkout.infinitepay.io}
+      InfinitePay__WebhookSecret: ${INFINITEPAY_WEBHOOK_SECRET:-}
+      InfinitePay__RedirectUrlBase: ${INFINITEPAY_REDIRECT_URL_BASE:-https://app.barbershopp.com.br/agendamentos/pagamento-retorno}
+      InfinitePay__WebhookUrl: ${INFINITEPAY_WEBHOOK_URL:-https://app.barbershopp.com.br/api/webhooks/infinitepay}
+      InfinitePay__TapResultUrlBase: ${INFINITEPAY_TAP_RESULT_URL_BASE:-https://app.barbershopp.com.br/agendamentos/tap-retorno}
+      InfinitePay__AppClientReferrer: ${INFINITEPAY_APP_CLIENT_REFERRER:-BarberShop}
+      # Cobrança da plataforma (assinatura SaaS)
+      PlataformaBilling__Handle: ${PLATAFORMA_INFINITEPAY_HANDLE:-}
+      PlataformaBilling__CheckoutApiUrl: ${PLATAFORMA_INFINITEPAY_CHECKOUT_API_URL:-https://api.checkout.infinitepay.io}
+      PlataformaBilling__WebhookSecret: ${PLATAFORMA_INFINITEPAY_WEBHOOK_SECRET:-}
+      PlataformaBilling__RedirectUrlBase: ${PLATAFORMA_INFINITEPAY_REDIRECT_URL_BASE:-https://app.barbershopp.com.br/assinatura/retorno}
+      PlataformaBilling__WebhookUrl: ${PLATAFORMA_INFINITEPAY_WEBHOOK_URL:-https://app.barbershopp.com.br/api/webhooks/infinitepay/plataforma}
+      PlataformaBilling__MensalidadeCentavos: ${PLATAFORMA_MENSALIDADE_CENTAVOS:-9900}
+      PlataformaBilling__TrialDias: ${PLATAFORMA_TRIAL_DIAS:-14}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis_barbershop:
+        condition: service_healthy
+    networks:
+      - barbershop_net
+
+  # ──────────────────────────────────────────────
+  # Frontend  –  React / Vite (Nginx)
+  #
+  # ✅ Sem porta exposta diretamente — o Traefik gerencia a entrada
+  # O Traefik escuta na 80/443 e roteia app.barbershopp.com.br → este container
+  # O SSL Let's Encrypt é gerado automaticamente pelo Traefik (certresolver: myresolver)
+  #
+  # ⚠️ Após subir o stack, conectar o container Traefik à rede barbershop_net:
+  #    Portainer → Containers → traefik-traefik-1 → Connected Networks → Join
+  # ──────────────────────────────────────────────
+  frontend:
+    image: ghcr.io/cristianocps/barbershop-msaas-frontend:latest
+    pull_policy: always
+    container_name: barbershop_frontend
+    restart: unless-stopped
+
+    depends_on:
+      - backend
+    networks:
+      - barbershop_net
+    ports:
+      - "80:80"
+    labels:
+      - "traefik.enable=true"
+
+      # ── Rota HTTPS (principal) ──────────────────────────────────
+      - "traefik.http.routers.barbershop.rule=Host(`app.barbershopp.com.br`)"
+      - "traefik.http.routers.barbershop.entrypoints=websecure"
+      - "traefik.http.routers.barbershop.tls=true"
+      - "traefik.http.routers.barbershop.tls.certresolver=myresolver"
+
+      # ── Rota HTTP → redireciona para HTTPS ─────────────────────
+      - "traefik.http.routers.barbershop-http.rule=Host(`app.barbershopp.com.br`)"
+      - "traefik.http.routers.barbershop-http.entrypoints=web"
+      - "traefik.http.routers.barbershop-http.middlewares=https-redirect"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+
+      # ── Porta interna do container que o Traefik vai usar ──────
+      - "traefik.http.services.barbershop.loadbalancer.server.port=80"
+
+# ──────────────────────────────────────────────
+# Volumes persistentes
+# ──────────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# ──────────────────────────────────────────────
+# Redes
+# ──────────────────────────────────────────────
+networks:
+  barbershop_net:
+    driver: bridge
