@@ -1,0 +1,97 @@
+# ─────────────────────────────────────────────────────────────
+# Barbearia — monorepo (.NET + React/Vite + Docker)
+# ─────────────────────────────────────────────────────────────
+
+# ── Segredos e ambiente ──────────────────────────────────────
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pfx
+*.pem
+secrets/
+
+# ── Backups e dumps de banco ─────────────────────────────────
+backups/postgres/*.dump
+backups/postgres/*.sql
+backups/postgres/*.gz
+*.dump
+dump-*
+*.bak.sql
+
+# ── Node / Vite (Barbearia/) ─────────────────────────────────
+node_modules/
+dist/
+dist-ssr/
+.npm
+*.tsbuildinfo
+
+# ── .NET / Visual Studio (backend/) ──────────────────────────
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Oo]ut/
+artifacts/
+publish/
+*.user
+*.userosscache
+*.suo
+*.rsuser
+*.sln.docstates
+*.DotSettings.user
+.vs/
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.ncrunch*
+_NCrunch_*
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+*.binlog
+coverage*/
+*.coverage
+*.Coveragexml
+
+# ── Logs ───────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ── Docker / Compose (cópias locais) ─────────────────────────
+docker-compose copy.yml
+docker-compose.override.yml
+docker-compose.*.local.yml
+
+# ── IDEs e SO ────────────────────────────────────────────────
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── Ferramentas / misc ───────────────────────────────────────
+*.local
+.cache/
+.turbo/
+.fake/
+.ionide/
+.localhistory/
+.terraform/
