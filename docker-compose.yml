@@ -64,6 +64,7 @@ services:
       JwtSettings__Issuer: Barbershop_backend
       JwtSettings__Audience: BarbershopApp
       JwtSettings__ExpirationInMinutes: "1440"
+      Google__ClientId: ${GOOGLE_CLIENT_ID:-}
       # Usuários criados/atualizados no seed (idempotente a cada startup)
       Seed__AdminEmail: ${SEED_ADMIN_EMAIL:-admin@demo.barbershop}
       Seed__AdminPassword: ${SEED_ADMIN_PASSWORD:-Admin@123}
@@ -109,6 +110,8 @@ services:
     build:
       context: ./Barbearia
       dockerfile: Dockerfile
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     pull_policy: build
     container_name: barbershop_frontend
     restart: unless-stopped

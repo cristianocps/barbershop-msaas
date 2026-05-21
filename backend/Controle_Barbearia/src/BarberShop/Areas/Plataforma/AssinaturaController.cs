@@ -31,7 +31,7 @@ namespace BarberShop.Areas.Plataforma
             IPlataformaAssinaturaServicos assinaturaServicos,
             IPrincipal principal,
             IUser? user,
-            IStoreRoles storeRoles) : base(environment, Policy.Gerente, context, configuration, signInManager, userManager, roleManager, principal, user, storeRoles)
+            IStoreRoles storeRoles) : base(environment, Policy.Consulta, context, configuration, signInManager, userManager, roleManager, principal, user, storeRoles)
         {
             _assinaturaServicos = assinaturaServicos;
         }

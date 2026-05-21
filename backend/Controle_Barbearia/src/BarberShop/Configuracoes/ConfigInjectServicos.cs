@@ -1,4 +1,5 @@
 using BarberShop.Aplicacao.Entidades.Acessos;
+using BarberShop.Servicos;
 using BarberShop.Aplicacao.Entidades.Agendamentos;
 using BarberShop.Aplicacao.Entidades.Basico;
 using BarberShop.Aplicacao.Entidades.Configuracoes;
@@ -47,6 +48,14 @@ namespace BarberShop.Configuracoes
             // usuarios
             services.AddScoped<IUsuarioServicos, UsuarioServicos>();
             services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
+
+            // auth / portal cliente / onboarding
+            services.AddScoped<IAuthProvisioningServicos, AuthProvisioningServicos>();
+            services.AddScoped<IContaClienteRepositorio, ContaClienteRepositorio>();
+            services.AddScoped<IClientePortalRepositorio, ClientePortalRepositorio>();
+            services.AddScoped<IClientePortalServicos, ClientePortalServicos>();
+            services.AddScoped<IOnboardingRepositorio, OnboardingRepositorio>();
+            services.AddScoped<IOnboardingServicos, OnboardingServicos>();
 
             // Configuracoes
             services.AddScoped<IEmpresaServicos, EmpresaServicos>();

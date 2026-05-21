@@ -8,53 +8,13 @@ import { EmpresasService } from '../services/Configuracoes/EmpresasService';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useConfirm } from '../components/UI/ConfirmModal';
-
-const ProfessionalWelcomeCard = ({ onAction }) => (
-    <div style={{
-        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-        borderRadius: '16px',
-        padding: '24px',
-        marginBottom: '24px',
-        color: '#fff',
-        boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-        position: 'relative',
-        overflow: 'hidden',
-        border: '1px solid rgba(255,255,255,0.1)'
-    }}>
-        <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '120px', height: '120px', background: 'rgba(246, 176, 1, 0.1)', borderRadius: '50%' }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', position: 'relative', zIndex: 1, flexWrap: 'wrap' }}>
-            <div style={{ background: '#f6b001', padding: '12px', borderRadius: '12px', color: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Building2 size={28} />
-            </div>
-            <div style={{ flex: '1 1 300px' }}>
-                <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', fontWeight: 800, color: '#fff' }}>Bem-vindo ao seu novo painel!</h3>
-                <p style={{ margin: '0 0 16px 0', color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem', lineHeight: '1.5' }}>
-                    Você ainda está usando nossa unidade de demonstração. Para começar a gerenciar sua própria barbearia e receber agendamentos, você precisa cadastrar sua empresa real.
-                </p>
-                <button 
-                    onClick={onAction}
-                    style={{
-                        background: '#f6b001',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '10px 20px',
-                        borderRadius: '10px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        transition: 'all 0.2s ease',
-                        boxShadow: '0 4px 12px rgba(246, 176, 1, 0.3)',
-                        fontSize: '0.9rem'
-                    }}
-                >
-                    Cadastrar minha Barbearia <ExternalLink size={16} />
-                </button>
-            </div>
-        </div>
-    </div>
-);
+import { useOnboardingTour } from '../hooks/useOnboardingTour';
+import { TOURS } from '../config/onboardingTours';
+import { canManageAllEmpresas } from '../utils/userPolicy';
+import { Navigate } from 'react-router-dom';
+import { assertApiSuccess } from '../services/apiHelpers';
+import { validateEmpresaForm, buildEmpresaApiPayload } from '../utils/validateEmpresaForm';
+import { getVitrineUrl } from '../utils/publicSiteUrl';
 
 export function Empresas() {
     const [data, setData] = useState([]);
@@ -65,15 +25,24 @@ export function Empresas() {
     const [total, setTotal] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
     const toast = useToast();
-    const { user, refreshEmpresa, empresa } = useAuth();
+    const { user, refreshEmpresa } = useAuth();
     const canInativar = (user?.userMaxPolicy ?? 0) >= 4;
     const { confirmModal, askConfirm } = useConfirm();
+    const { iniciarTour } = useOnboardingTour();
+    const isAdminEmpresas = canManageAllEmpresas(user);
+
+    useEffect(() => {
+        if (!isAdminEmpresas) return;
+        const steps = TOURS.empresa({ showWelcome: false, showNovo: true });
+        if (steps.length) iniciarTour('empresa-admin', steps);
+    }, [iniciarTour, isAdminEmpresas]);
 
     // Modal state
     const [modalOpen, setModalOpen] = useState(false);
     const [modalLoading, setModalLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState(EmpresaFormDefault());
+    const [fieldErrors, setFieldErrors] = useState({});
 
     const isEditing = (form.id ?? 0) !== 0;
 
@@ -134,30 +103,21 @@ export function Empresas() {
     };
 
     const handleSave = async () => {
-        if (!form.descricao?.trim()) {
-            toast.error('Informe o nome da empresa.');
+        const { valid, errors } = validateEmpresaForm(form, { requireSlug: false });
+        setFieldErrors(errors);
+        if (!valid) {
+            toast.error('Corrija os campos destacados antes de salvar.');
             return;
         }
         setSaving(true);
         try {
-            await EmpresasService.alterar({
-                id:        form.id || 0,
-                descricao: form.descricao,
-                cnpj:      form.cnpj     || '',
-                telefone:  form.telefone || '',
-                email:     form.email    || '',
-                endereco:  form.endereco || '',
-                cidade:    form.cidade   || '',
-                estado:    form.estado   || '',
-                slug:      form.slug     || '',
-                logoData:  form.logoData || '',
-                status:    form.status   ?? 1,
-                infinitepayHandle: form.infinitepayHandle || '',
-            });
+            const res = await EmpresasService.alterar(buildEmpresaApiPayload(form));
+            assertApiSuccess(res, 'Erro ao salvar.');
             toast.success(isEditing ? 'Empresa atualizada com sucesso!' : 'Empresa cadastrada com sucesso!');
             setModalOpen(false);
+            setFieldErrors({});
             loadData();
-            refreshEmpresa(); // Atualiza logo/nome na sidebar imediatamente
+            refreshEmpresa();
         } catch (err) {
             toast.error(err.message || 'Erro ao salvar.');
         } finally {
@@ -191,7 +151,7 @@ export function Empresas() {
 
     const actionBtns = (row) => (
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-            <button title="Acessar Vitrine" onClick={() => window.open(`/${row.slug || row.Slug}`, '_blank')} style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <button title="Acessar Vitrine" onClick={() => { const u = getVitrineUrl(row.slug || row.Slug); if (u) window.open(u, '_blank'); }} style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <ExternalLink size={14} />
             </button>
             <button title="Editar" onClick={() => openEdit(row)} style={{ width: '34px', height: '34px', borderRadius: '9px', background: 'rgba(246,176,1,0.1)', color: '#e09800', border: '1px solid rgba(246,176,1,0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -244,7 +204,7 @@ export function Empresas() {
                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: '#6b7280' }}><MapPin size={13} />{row.endereco || row.Endereco || '–'}</span>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                    <button title="Acessar Vitrine" onClick={() => window.open(`/${row.slug || row.Slug}`, '_blank')} style={{ flex: 1, padding: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'rgba(59,130,246,0.1)', color: '#3b82f6', borderRadius: '10px', fontWeight: 700, border: '1px solid rgba(59,130,246,0.2)', cursor: 'pointer', fontSize: '0.825rem' }}><ExternalLink size={13} /> Vitrine</button>
+                    <button title="Acessar Vitrine" onClick={() => { const u = getVitrineUrl(row.slug || row.Slug); if (u) window.open(u, '_blank'); }} style={{ flex: 1, padding: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'rgba(59,130,246,0.1)', color: '#3b82f6', borderRadius: '10px', fontWeight: 700, border: '1px solid rgba(59,130,246,0.2)', cursor: 'pointer', fontSize: '0.825rem' }}><ExternalLink size={13} /> Vitrine</button>
                     <button onClick={() => openEdit(row)} style={{ flex: 1, padding: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'rgba(246,176,1,0.1)', color: '#e09800', borderRadius: '10px', fontWeight: 700, border: '1px solid rgba(246,176,1,0.2)', cursor: 'pointer', fontSize: '0.825rem' }}><Edit2 size={13} /> Editar</button>
                     {canInativar && (
                         <button onClick={() => handleInativar(row.id || row.ID)} style={{ flex: 1, padding: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'rgba(239,68,68,0.08)', color: '#ef4444', borderRadius: '10px', fontWeight: 700, border: '1px solid rgba(239,68,68,0.15)', cursor: 'pointer', fontSize: '0.825rem' }}><Trash2 size={13} /> Inativar</button>
@@ -254,24 +214,28 @@ export function Empresas() {
         );
     };
 
+    if (!isAdminEmpresas) {
+        return <Navigate to="/minha-barbearia" replace />;
+    }
+
     return (
         <div>
             <PageHeader
                 icon={<Building2 />}
                 title="Barbearias"
-                subtitle="Gerencie as unidades da rede"
+                subtitle="Administração da plataforma — todas as unidades"
                 newLabel="Nova Empresa"
-                onNew={((user?.userMaxPolicy === 3 && empresa?.id === 1) || (user?.userMaxPolicy >= 4)) ? openNew : undefined}
+                headerTourId="empresas-page-intro"
+                newButtonTourId="empresas-novo"
+                onNew={openNew}
             />
-            {(user?.userMaxPolicy === 3 && empresa?.id === 1) && (
-                <ProfessionalWelcomeCard onAction={openNew} />
-            )}
             <PageSearch
                 value={searchTerm}
                 onChange={setSearchTerm}
                 onSearch={loadData}
                 placeholder="Buscar por nome, CNPJ ou endereço..."
             />
+            <div data-tour="empresas-grid">
             <DataGrid
                 columns={columns}
                 data={data}
@@ -288,6 +252,7 @@ export function Empresas() {
                 emptyTitle="Nenhuma empresa encontrada"
                 emptyMessage="Cadastre uma nova barbearia para começar."
             />
+            </div>
 
             <FormModal
                 open={modalOpen}
@@ -300,7 +265,7 @@ export function Empresas() {
                 loading={modalLoading}
                 saveLabel={isEditing ? 'Salvar Alterações' : 'Cadastrar Empresa'}
             >
-                <EmpresaForm form={form} onChange={setForm} />
+                <EmpresaForm form={form} onChange={setForm} fieldErrors={fieldErrors} />
             </FormModal>
             {confirmModal}
         </div>

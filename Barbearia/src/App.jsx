@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { ToastContainer } from './components/UI/Toast';
@@ -12,6 +13,7 @@ import { Usuarios } from './pages/Usuarios';
 import { DadosBancarios } from './pages/DadosBancarios';
 import { Agendamentos } from './pages/Agendamentos';
 import { Empresas } from './pages/Empresas';
+import { MinhaBarbearia } from './pages/MinhaBarbearia';
 import { Clientes } from './pages/Clientes';
 import { Servicos } from './pages/Servicos';
 import { Profissionais } from './pages/Profissionais';
@@ -27,6 +29,11 @@ import { AssinaturaProvider } from './contexts/AssinaturaContext';
 import { AssinaturaRoute } from './components/Layout/AssinaturaRoute';
 import { BarbeariaOnlyRoute } from './components/Layout/BarbeariaOnlyRoute';
 import { HomeRedirect } from './components/Layout/HomeRedirect';
+import { ClienteOnlyRoute } from './components/Layout/ClienteOnlyRoute';
+import { ClienteLayout } from './components/Layout/ClienteLayout';
+import { ClienteAgendamentos } from './pages/cliente/ClienteAgendamentos';
+import { ClientePerfil } from './pages/cliente/ClientePerfil';
+import { Onboarding } from './pages/Onboarding';
 
 import './index.css';
 import './styles/layout.css';
@@ -42,6 +49,14 @@ function AppRoutes() {
         <Routes>
             <Route path="/login" element={<Login />} />
 
+            <Route path="/cliente" element={<ClienteOnlyRoute />}>
+                <Route element={<ClienteLayout />}>
+                    <Route index element={<Navigate to="/cliente/agendamentos" replace />} />
+                    <Route path="agendamentos" element={<ClienteAgendamentos />} />
+                    <Route path="perfil" element={<ClientePerfil />} />
+                </Route>
+            </Route>
+
             {/* Rotas Privadas - Admin */}
             <Route path="/" element={<PrivateRoute><MainLayout /></PrivateRoute>}>
                 <Route path="plataforma/financeiro" element={<RoleRoute minPolicy="desenvolvedor"><PlataformaFinanceiro /></RoleRoute>} />
@@ -50,15 +65,17 @@ function AppRoutes() {
                 <Route path="assinatura/retorno" element={<AssinaturaRetorno />} />
                 <Route element={<AssinaturaRoute />}>
                 <Route index element={<HomeRedirect />} />
+                <Route path="onboarding" element={<RoleRoute minPolicy="profissional"><Onboarding /></RoleRoute>} />
                 <Route path="agendamentos" element={<Agendamentos />} />
                 <Route path="financeiro" element={<RoleRoute minPolicy="gerente"><Financeiro /></RoleRoute>} />
                 <Route path="clientes" element={<RoleRoute minPolicy="consulta"><Clientes /></RoleRoute>} />
                 <Route path="usuarios" element={<RoleRoute minPolicy="admin"><Usuarios /></RoleRoute>} />
                 <Route path="profissionais" element={<RoleRoute minPolicy="profissional"><Profissionais /></RoleRoute>} />
                 <Route path="horarios" element={<RoleRoute minPolicy="profissional"><Horarios /></RoleRoute>} />
-                <Route path="empresas" element={<RoleRoute minPolicy="profissional"><Empresas /></RoleRoute>} />
+                <Route path="minha-barbearia" element={<RoleRoute minPolicy="profissional"><MinhaBarbearia /></RoleRoute>} />
+                <Route path="empresas" element={<RoleRoute minPolicy="admin"><Empresas /></RoleRoute>} />
                 <Route path="servicos" element={<RoleRoute minPolicy="profissional"><Servicos /></RoleRoute>} />
-                <Route path="configuracoes/dados-bancarios" element={<RoleRoute minPolicy="admin"><DadosBancarios /></RoleRoute>} />
+                <Route path="configuracoes/dados-bancarios" element={<RoleRoute minPolicy="profissional"><DadosBancarios /></RoleRoute>} />
                 <Route path="configuracoes/infinite-pay" element={<RoleRoute minPolicy="gerente"><InfinitePayConfig /></RoleRoute>} />
                 </Route>
                 </Route>
@@ -78,18 +95,28 @@ function AppRoutes() {
     );
 }
 
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
 function App() {
-    return (
+    const inner = (
         <BrowserRouter>
             <ToastProvider>
                 <AuthProvider>
                     <AssinaturaProvider>
-                    <AppRoutes />
+                        <AppRoutes />
                     </AssinaturaProvider>
                     <ToastContainer />
                 </AuthProvider>
             </ToastProvider>
         </BrowserRouter>
+    );
+
+    if (!googleClientId) return inner;
+
+    return (
+        <GoogleOAuthProvider clientId={googleClientId}>
+            {inner}
+        </GoogleOAuthProvider>
     );
 }
 

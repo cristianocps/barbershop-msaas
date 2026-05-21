@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.5",
     "date-fns": "^4.1.0",
+    "driver.js": "^1.4.0",
     "lucide-react": "^0.577.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.0",

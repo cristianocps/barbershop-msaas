@@ -1,18 +1,30 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Scissors, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Scissors, Mail, Lock, ArrowRight, Eye, EyeOff, Building2, User } from 'lucide-react';
+import { GoogleLoginButton } from '../components/Auth/GoogleLoginButton';
+import { isClienteUser } from '../utils/userPolicy';
 
 export function Login() {
-    const { login, registrar } = useAuth();
+    const { login, registrar, loginGoogle } = useAuth();
     const navigate = useNavigate();
     const [isRegister, setIsRegister] = useState(false);
+    const [tipoCadastro, setTipoCadastro] = useState('Barbearia');
+    const [nome, setNome] = useState('');
+    const [telefone, setTelefone] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPass, setShowPass] = useState(false);
     const [focused, setFocused] = useState('');
+    const [googlePending, setGooglePending] = useState(null);
+    const [showTipoModal, setShowTipoModal] = useState(false);
+
+    const redirectAfterAuth = (authUser) => {
+        if (isClienteUser(authUser)) navigate('/cliente/agendamentos');
+        else navigate('/');
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -20,19 +32,69 @@ export function Login() {
 
         if (isRegister) {
             if (password !== confirmPassword) {
-                // O toast erro é tratado no registrar do contexto, mas aqui validamos localmente se as senhas batem
-                alert("As senhas não coincidem!"); // Poderia usar toast.error se importasse
+                alert('As senhas não coincidem!');
                 setLoading(false);
                 return;
             }
-            const success = await registrar(email, password, confirmPassword);
+            if (tipoCadastro === 'Cliente' && nome.trim().length < 2) {
+                alert('Informe seu nome.');
+                setLoading(false);
+                return;
+            }
+            localStorage.setItem('auth_account_type', tipoCadastro === 'Cliente' ? 'cliente' : 'barbearia');
+            const result = await registrar({
+                email,
+                password,
+                confirmPassword,
+                tipoCadastro,
+                nome: nome.trim() || undefined,
+                telefone: telefone.trim() || undefined,
+            });
             setLoading(false);
-            if (success) navigate('/');
+            if (result?.success) redirectAfterAuth(result.user);
         } else {
-            const success = await login(email, password);
+            const result = await login(email, password);
             setLoading(false);
-            if (success) navigate('/');
+            if (result?.success) redirectAfterAuth(result.user);
         }
+    };
+
+    const handleGoogleSuccess = async (credentialResponse) => {
+        const idToken = credentialResponse?.credential;
+        if (!idToken) return;
+
+        setLoading(true);
+        const payload = {
+            idToken,
+            tipoCadastro: isRegister ? tipoCadastro : undefined,
+            nome: nome.trim() || undefined,
+            telefone: telefone.trim() || undefined,
+        };
+
+        const result = await loginGoogle(payload);
+        if (result?.requiresTipoCadastro) {
+            setGooglePending(idToken);
+            setShowTipoModal(true);
+            setLoading(false);
+            return;
+        }
+        setLoading(false);
+        if (result?.success) redirectAfterAuth(result.user);
+    };
+
+    const confirmGoogleTipo = async () => {
+        if (!googlePending) return;
+        setLoading(true);
+        const result = await loginGoogle({
+            idToken: googlePending,
+            tipoCadastro,
+            nome: nome.trim() || undefined,
+            telefone: telefone.trim() || undefined,
+        });
+        setLoading(false);
+        setShowTipoModal(false);
+        setGooglePending(null);
+        if (result?.success) redirectAfterAuth(result.user);
     };
 
     return (
@@ -425,10 +487,69 @@ export function Login() {
                 <div className="login-right">
                     <div className="login-form-header">
                         <h2>{isRegister ? 'Crie sua conta ✂' : 'Bem-vindo de volta 👋'}</h2>
-                        <p>{isRegister ? 'Cadastre sua barbearia no sistema profissional' : 'Faça login para acessar o painel de gestão'}</p>
+                        <p>{isRegister ? 'Escolha como deseja usar o BarberPro' : 'Faça login para continuar'}</p>
                     </div>
 
+                    {isRegister && (
+                        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', width: '100%' }}>
+                            {[
+                                { id: 'Barbearia', label: 'Tenho uma barbearia', icon: Building2 },
+                                { id: 'Cliente', label: 'Sou cliente', icon: User },
+                            ].map(({ id, label, icon: Icon }) => (
+                                <button
+                                    key={id}
+                                    type="button"
+                                    onClick={() => setTipoCadastro(id)}
+                                    style={{
+                                        flex: 1,
+                                        padding: '12px',
+                                        borderRadius: 10,
+                                        border: tipoCadastro === id ? '2px solid #d4af37' : '1px solid #e2e8f0',
+                                        background: tipoCadastro === id ? '#fffbeb' : '#fff',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
+                                    }}
+                                >
+                                    <Icon size={18} color="#d4af37" style={{ marginBottom: 4 }} />
+                                    <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{label}</div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+                        {isRegister && (
+                            <>
+                                <div className="login-field">
+                                    <label>Nome {tipoCadastro === 'Cliente' ? '*' : '(opcional)'}</label>
+                                    <div className={`login-input-wrap ${focused === 'nome' ? 'focused' : ''}`}>
+                                        <User className="login-input-icon" size={15} />
+                                        <input
+                                            type="text"
+                                            className="login-input"
+                                            placeholder="Seu nome"
+                                            value={nome}
+                                            onChange={(e) => setNome(e.target.value)}
+                                            onFocus={() => setFocused('nome')}
+                                            onBlur={() => setFocused('')}
+                                            required={tipoCadastro === 'Cliente'}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="login-field">
+                                    <label>Telefone (opcional)</label>
+                                    <input
+                                        type="tel"
+                                        className="login-input"
+                                        style={{ width: '100%', padding: '0.85rem 1rem', borderRadius: 10, border: '1px solid #e2e8f0' }}
+                                        placeholder="(11) 99999-9999"
+                                        value={telefone}
+                                        onChange={(e) => setTelefone(e.target.value)}
+                                    />
+                                </div>
+                            </>
+                        )}
+
                         <div className="login-field">
                             <label>E-mail</label>
                             <div className={`login-input-wrap ${focused === 'email' ? 'focused' : ''}`}>
@@ -497,9 +618,21 @@ export function Login() {
                         <button id="login-submit" type="submit" className="login-submit" disabled={loading}>
                             {loading
                                 ? <><span className="login-submit-spinner" /> {isRegister ? 'Cadastrando...' : 'Entrando...'}</>
-                                : <>{isRegister ? 'Finalizar Cadastro' : 'Entrar no Painel'} <ArrowRight size={17} /></>
+                                : <>{isRegister ? 'Finalizar Cadastro' : 'Entrar'} <ArrowRight size={17} /></>
                             }
                         </button>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1.25rem 0', color: '#94a3b8', fontSize: '0.85rem' }}>
+                            <span style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+                            ou
+                            <span style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+                        </div>
+
+                        <GoogleLoginButton
+                            disabled={loading}
+                            onSuccess={handleGoogleSuccess}
+                            onError={() => alert('Falha no login com Google.')}
+                        />
 
                         <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.9rem' }}>
                             {isRegister ? (
@@ -554,6 +687,45 @@ export function Login() {
                     </div>
                 </div>
             </div>
+
+            {showTipoModal && (
+                <div style={{
+                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
+                }}>
+                    <div style={{ background: '#fff', borderRadius: 16, padding: '1.5rem', maxWidth: 400, width: '90%' }}>
+                        <h3 style={{ marginTop: 0 }}>Como você vai usar o BarberPro?</h3>
+                        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
+                            {['Barbearia', 'Cliente'].map((t) => (
+                                <button
+                                    key={t}
+                                    type="button"
+                                    onClick={() => setTipoCadastro(t)}
+                                    style={{
+                                        flex: 1, padding: 12, borderRadius: 8,
+                                        border: tipoCadastro === t ? '2px solid #d4af37' : '1px solid #ddd',
+                                        background: tipoCadastro === t ? '#fffbeb' : '#fff',
+                                        cursor: 'pointer', fontWeight: 600,
+                                    }}
+                                >
+                                    {t === 'Barbearia' ? 'Barbearia' : 'Cliente'}
+                                </button>
+                            ))}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={confirmGoogleTipo}
+                            disabled={loading}
+                            style={{
+                                width: '100%', padding: 12, background: '#d4af37',
+                                border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer',
+                            }}
+                        >
+                            Continuar
+                        </button>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

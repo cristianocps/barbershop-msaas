@@ -5,6 +5,7 @@ import { format, addDays, startOfToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { VitrineService } from '../services/Agendamentos/VitrineService';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 import '../index.css';
 
 /**
@@ -14,6 +15,7 @@ function App() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const { contaCliente, isAuthenticated } = useAuth();
 
   // Estados de dados do backend
   const [empresa, setEmpresa] = useState(null);
@@ -32,6 +34,16 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(startOfToday());
   const [selectedTime, setSelectedTime] = useState(null);
   const [customer, setCustomer] = useState({ name: '', phone: '', notes: '' });
+
+  useEffect(() => {
+    if (isAuthenticated && contaCliente) {
+      setCustomer((c) => ({
+        ...c,
+        name: contaCliente.nome || c.name,
+        phone: contaCliente.telefone || c.phone,
+      }));
+    }
+  }, [isAuthenticated, contaCliente]);
   const [chavesPix, setChavesPix] = useState([]);
   const [comprovanteBase64, setComprovanteBase64] = useState(null);
   const [indisponivel, setIndisponivel] = useState(false);
@@ -152,6 +164,7 @@ function App() {
       const payload = {
         idEmpresa: empId,
         idProfissional: selectedProfessional.id,
+        idConta: contaCliente?.id ?? undefined,
         nomeCliente: customer.name,
         telefoneCliente: '',
         observacao: customer.notes || '',

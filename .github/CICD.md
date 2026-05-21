@@ -46,6 +46,17 @@ docker compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d backend fr
 
 Postgres e Redis continuam no `docker-compose.yml` base (build local não é usado para app).
 
+## Login com Google
+
+Configure o OAuth Client no [Google Cloud Console](https://console.cloud.google.com/) (tipo **Web**) e defina:
+
+| Variável | Onde |
+|----------|------|
+| `GOOGLE_CLIENT_ID` | Backend (`appsettings` / env do container) |
+| `VITE_GOOGLE_CLIENT_ID` | Build do frontend (arg Docker ou `.env`) |
+
+Origens autorizadas de exemplo: `http://localhost:5173`, `https://seu-dominio.com`.
+
 ## Tornar pacotes públicos (opcional)
 
 GitHub → **Packages** → pacote → **Package settings** → **Change visibility** → Public.

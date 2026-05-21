@@ -192,12 +192,12 @@ const css = `
 }
 `;
 
-export function PageHeader({ icon, title, subtitle, onNew, newLabel = 'Novo' }) {
+export function PageHeader({ icon, title, subtitle, onNew, newLabel = 'Novo', headerTourId, newButtonTourId }) {
     return (
         <>
             <style>{css}</style>
             <div className="page-hdr">
-                <div className="page-hdr-info">
+                <div className="page-hdr-info" {...(headerTourId ? { 'data-tour': headerTourId } : {})}>
                     <div className="page-hdr-icon">
                         {React.cloneElement(icon, { size: 20, color: '#fff' })}
                     </div>
@@ -207,7 +207,12 @@ export function PageHeader({ icon, title, subtitle, onNew, newLabel = 'Novo' }) 
                     </div>
                 </div>
                 {onNew && (
-                    <button className="page-hdr-btn" onClick={onNew}>
+                    <button
+                        type="button"
+                        className="page-hdr-btn"
+                        onClick={onNew}
+                        {...(newButtonTourId ? { 'data-tour': newButtonTourId } : {})}
+                    >
                         <Plus size={16} />{newLabel}
                     </button>
                 )}

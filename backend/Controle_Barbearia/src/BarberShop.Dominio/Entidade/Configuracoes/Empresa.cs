@@ -82,6 +82,12 @@ namespace BarberShop.Dominio.Entidade.Configuracoes
         [Column("infinitepay_webhook_secret", TypeName = "varchar(255)")]
         public string? InfinitepayWebhookSecret { get; set; }
 
+        [Column("onboarding_completo", TypeName = "boolean")]
+        public bool OnboardingCompleto { get; set; }
+
+        [Column("onboarding_etapas", TypeName = "jsonb")]
+        public string? OnboardingEtapas { get; set; }
+
         [NotMapped]
         [ScaffoldColumn(false)]
         public long RecordsTotal { get; set; } = default!;

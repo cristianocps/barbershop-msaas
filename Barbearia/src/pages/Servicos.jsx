@@ -8,6 +8,8 @@ import { ServicosAppService } from '../services/Configuracoes/ServicosService';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useConfirm } from '../components/UI/ConfirmModal';
+import { useOnboardingTour } from '../hooks/useOnboardingTour';
+import { TOURS } from '../config/onboardingTours';
 
 export function Servicos() {
     const [data, setData] = useState([]);
@@ -21,6 +23,12 @@ export function Servicos() {
     const { user } = useAuth();
     const canInativar = (user?.userMaxPolicy ?? 0) >= 4;
     const { confirmModal, askConfirm } = useConfirm();
+    const { iniciarTour } = useOnboardingTour();
+
+    useEffect(() => {
+        const steps = TOURS.servicos({ hasNewButton: true });
+        if (steps.length) iniciarTour('servicos', steps);
+    }, [iniciarTour]);
 
     // Modal state
     const [modalOpen, setModalOpen] = useState(false);
@@ -210,6 +218,8 @@ export function Servicos() {
                 title="Serviços"
                 subtitle="Catálogo de serviços da barbearia"
                 newLabel="Novo Serviço"
+                headerTourId="servicos-page-intro"
+                newButtonTourId="servicos-novo"
                 onNew={openNew}
             />
             <PageSearch
@@ -218,6 +228,7 @@ export function Servicos() {
                 onSearch={loadData}
                 placeholder="Buscar por nome ou descrição..."
             />
+            <div data-tour="servicos-grid">
             <DataGrid
                 columns={columns}
                 data={data}
@@ -234,6 +245,7 @@ export function Servicos() {
                 emptyTitle="Nenhum serviço encontrado"
                 emptyMessage="Cadastre um novo serviço para o seu catálogo."
             />
+            </div>
 
             <FormModal
                 open={modalOpen}

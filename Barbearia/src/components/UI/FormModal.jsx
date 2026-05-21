@@ -194,6 +194,12 @@ const css = `
   color: #9ca3af;
   margin-top: 4px;
 }
+.fm-input-error {
+  font-size: 0.72rem;
+  color: #dc2626;
+  margin-top: 4px;
+  font-weight: 600;
+}
 .fm-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -314,7 +320,7 @@ export function FormModal({
 }
 
 /* Helper sub-components for form fields */
-export function FormField({ label, required, hint, children }) {
+export function FormField({ label, required, hint, error, children }) {
     return (
         <div className="fm-field">
             {label && (
@@ -323,7 +329,8 @@ export function FormField({ label, required, hint, children }) {
                 </label>
             )}
             {children}
-            {hint && <div className="fm-input-hint">{hint}</div>}
+            {error && <div className="fm-input-error" role="alert">{error}</div>}
+            {hint && !error && <div className="fm-input-hint">{hint}</div>}
         </div>
     );
 }

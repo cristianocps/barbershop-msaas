@@ -25,6 +25,15 @@ export function unwrapApiResponse(res) {
     return { ok: true, data, message };
 }
 
+/** Lança Error se a API respondeu com jsonTypes: error (mesmo em HTTP 200). */
+export function assertApiSuccess(res, fallbackMessage = 'Erro na operação') {
+    const { ok, message } = unwrapApiResponse(res);
+    if (!ok) {
+        throw new Error(message || fallbackMessage);
+    }
+    return unwrapApiResponse(res);
+}
+
 /** Lê campo ignorando PascalCase / camelCase */
 export function pickField(obj, ...keys) {
     if (!obj || typeof obj !== 'object') return undefined;

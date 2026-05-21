@@ -47,6 +47,15 @@ namespace BarberShop.Areas.Empresas
                 if (dados == null)
                     throw new Exception("Dados do fomulário vazio");
 
+                if (dados.ID <= 0)
+                {
+                    dados.ID = 0;
+                    if (dados.DtCriacao == default)
+                        dados.DtCriacao = DateTime.Now;
+                    if (dados.IdUsuario <= 0 && (Identidade.IdUsuarioLogado ?? 0) > 0)
+                        dados.IdUsuario = Identidade.IdUsuarioLogado ?? 0;
+                }
+
                 //if (string.IsNullOrEmpty(dados.LogoData)) 
                 //    throw new TratamentoExcecao("A Logo chegou VAZIA no C#! O C# não conseguiu ler a imagem que o React enviou. Tem certeza que o arquivo era uma imagem válida?");
 
@@ -75,6 +84,8 @@ namespace BarberShop.Areas.Empresas
         {
             try
             {
+                if (!IsAuthorized || StoreRoles == null || !StoreRoles.IsInPolicy(Policy.Admin))
+                    return await ResponseJson(ResponseJsonTypes.Error, "Apenas administradores podem alterar o status de empresas.");
 
                 var _result = await _empresaServicos.AlterarStatusEmpresa(id, status).ConfigureAwait(false);
 
@@ -110,6 +121,9 @@ namespace BarberShop.Areas.Empresas
         {
             try
             {
+                if (!IsAuthorized || StoreRoles == null || !StoreRoles.IsInPolicy(Policy.Admin))
+                    return await ResponseJson(ResponseJsonTypes.Error, "Listagem de barbearias disponível apenas para administradores.");
+
                 search ??= new DataTableSearch
                 {
                     value = "",

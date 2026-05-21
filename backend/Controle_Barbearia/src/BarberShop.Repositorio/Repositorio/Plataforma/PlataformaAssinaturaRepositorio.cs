@@ -75,7 +75,7 @@ namespace BarberShop.Repositorio.Repositorio.Plataforma
         public async Task<bool> EstaBloqueadaAsync(long idEmpresa)
         {
             var a = await ObterPorEmpresaAsync(idEmpresa).ConfigureAwait(false);
-            if (a == null) return true;
+            if (a == null) return false;
             await AtualizarStatusComputadoAsync(idEmpresa).ConfigureAwait(false);
             a = await ObterPorEmpresaAsync(idEmpresa).ConfigureAwait(false);
             return await EstaBloqueadaInternaAsync(a!).ConfigureAwait(false);

@@ -1,4 +1,4 @@
-﻿using BarberShop.Dominio.Entidade.DTOs;
+using BarberShop.Dominio.Entidade.DTOs;
 using BarberShop.Dominio.Interfaces.Base;
 using BarberShop.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -115,6 +115,24 @@ namespace BarberShop.Controllers
                 if (!string.IsNullOrWhiteSpace(_credential)) long.TryParse(_credential, out idUsuarioIdentity);
 
                 IsAuthorized = storeRoles.IsInPolicy(policy);
+
+                if (!IsAuthorized
+                    && httpContextUser?.Identity?.IsAuthenticated == true
+                    && !string.IsNullOrWhiteSpace(emailUsuario)
+                    && UserManager != null
+                    && storeRoles.Roles.Count == 0)
+                {
+                    var identityUser = UserManager.FindByEmailAsync(emailUsuario).GetAwaiter().GetResult();
+                    if (identityUser != null)
+                    {
+                        var dbRoles = UserManager.GetRolesAsync(identityUser).GetAwaiter().GetResult();
+                        if (dbRoles.Count > 0)
+                        {
+                            storeRoles.CarregarRolesDoBanco(dbRoles);
+                            IsAuthorized = storeRoles.IsInPolicy(policy);
+                        }
+                    }
+                }
 
                 Identidade = Context.HttpContext?.RequestServices.GetRequiredService<TransferenciaIdentidadeDTO>()
                              ?? new TransferenciaIdentidadeDTO();

@@ -1,9 +1,10 @@
-﻿namespace BarberShop.Dominio.Enuns
+namespace BarberShop.Dominio.Enuns
 {
     public interface IGroupPolicies
     {
         public enum UserRoles
         {
+            Cliente = 0,
             Consulta = 1,
             Usuario = 2,
             Profissional = 3,
@@ -14,6 +15,7 @@
 
         public enum Policy
         {
+            Cliente = 0,
             Consulta = 1,
             Usuario = 2,
             Profissional = 3,

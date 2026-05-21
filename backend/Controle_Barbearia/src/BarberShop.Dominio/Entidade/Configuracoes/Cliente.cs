@@ -28,6 +28,9 @@ namespace BarberShop.Dominio.Entidade.Configuracoes
         [Column("idusuario", Order = 3, TypeName = "bigint")]
         public long IdUsuario { get; set; } = default!;
 
+        [Column("idconta", Order = 3, TypeName = "bigint")]
+        public long? IdConta { get; set; }
+
         [DataType(DataType.Text)]
         [MaxLength(150, ErrorMessage = "tamanho máximo 150 caracteres")]
         [Required(ErrorMessage = "obrigatório informar a propriedade: descricao", AllowEmptyStrings = false)]

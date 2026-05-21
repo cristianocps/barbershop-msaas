@@ -24,5 +24,21 @@ namespace BarberShop.Models
 
         [Compare("Password", ErrorMessage = "As senhas não conferem")]
         public string ConfirmPassword { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Informe o tipo de cadastro")]
+        public string TipoCadastro { get; set; } = "Barbearia";
+
+        public string? Nome { get; set; }
+        public string? Telefone { get; set; }
+    }
+
+    public class GoogleLoginModel
+    {
+        [Required]
+        public string IdToken { get; set; } = string.Empty;
+
+        public string? TipoCadastro { get; set; }
+        public string? Nome { get; set; }
+        public string? Telefone { get; set; }
     }
 }

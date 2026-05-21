@@ -1,81 +1,68 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useToast } from './ToastContext';
 import { AuthService } from '../services/Acessos/AuthService';
 import { EmpresasService } from '../services/Configuracoes/EmpresasService';
+import { PortalClienteService } from '../services/Acessos/PortalClienteService';
+import { isClienteUser } from '../utils/userPolicy';
+import {
+    buildUserFromAuth,
+    decodeToken,
+    extractRolesFromApi,
+    extractAccountTypeFromApi,
+    extractToken,
+    AUTH_ACCOUNT_TYPE_KEY,
+    AUTH_ROLES_KEY,
+} from '../utils/authToken';
 
 const AuthContext = createContext(null);
 
+async function syncSessionFromServer(token, apiRoles, accountType) {
+    try {
+        const me = await AuthService.me();
+        const roles = me?.roles ?? me?.Roles ?? apiRoles;
+        const acc = me?.accountType ?? me?.AccountType ?? accountType;
+        return buildUserFromAuth(decodeToken(token), roles, acc);
+    } catch {
+        return buildUserFromAuth(decodeToken(token), apiRoles, accountType);
+    }
+}
+
+function persistSessionMeta(apiRoles, accountType) {
+    if (apiRoles?.length) {
+        localStorage.setItem(AUTH_ROLES_KEY, JSON.stringify(apiRoles));
+    }
+    if (accountType) {
+        localStorage.setItem(AUTH_ACCOUNT_TYPE_KEY, accountType);
+    }
+}
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [empresa, setEmpresa] = useState(null); // { descricao, logoData }
+    const [empresa, setEmpresa] = useState(null);
+    const [contaCliente, setContaCliente] = useState(null);
     const [token, setToken] = useState(localStorage.getItem('token') || null);
     const [loading, setLoading] = useState(true);
     const toast = useToast();
 
-    useEffect(() => {
-        if (token) {
-            try {
-                // Decode da payload do JWT
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-
-                const decoded = JSON.parse(jsonPayload);
-                const userName = decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || decoded.unique_name || 'Usuário';
-                const userEmail = decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || decoded.email || '';
-                
-                const roleKey = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
-                const rawRoles = decoded[roleKey] || decoded.role || [];
-                const roles = Array.isArray(rawRoles) ? rawRoles : [rawRoles];
-                
-                let userMaxPolicy = 0;
-                const policyMap = { 'consulta': 1, 'usuario': 2, 'profissional': 3, 'gerente': 4, 'admin': 5, 'desenvolvedor': 6 };
-                roles.forEach(role => {
-                    const norm = (role || "").toString().normalize('NFD').replace(/[\u0300-\u036f]/g, "").toLowerCase();
-                    if (policyMap[norm] > userMaxPolicy) userMaxPolicy = policyMap[norm];
-                });
-                
-                setUser({ name: userName, email: userEmail, roles, userMaxPolicy });
-
-                // Busca a empresa do usuário para exibir logo e nome na sidebar
-                _fetchEmpresaAtual();
-
-            } catch (e) {
-                console.error("Erro ao decodificar token", e);
-                logout();
-            }
-        } else {
-            setUser(null);
-            setEmpresa(null);
-        }
-        setLoading(false);
-    }, [token]);
-
-    // Busca o combo de empresas do usuário e pega a primeira (a empresa do contexto logado)
     const _fetchEmpresaAtual = async () => {
         try {
             const res = await EmpresasService.carregarCombo('', 1);
             const lista = res?.Data ?? res?.data ?? [];
             const primeira = Array.isArray(lista) ? lista[0] : null;
             if (primeira?.id) {
-                // Busca os detalhes completos (com logoData)
                 const detRes = await EmpresasService.editar(primeira.id);
                 const dados = detRes?.Data ?? detRes?.data ?? detRes;
                 if (dados) {
                     setEmpresa({
-                        id:        dados.id        ?? dados.ID        ?? primeira.id,
+                        id: dados.id ?? dados.ID ?? primeira.id,
                         descricao: dados.descricao ?? dados.Descricao ?? primeira.text ?? 'Barbearia',
-                        logoData:  dados.logoData  ?? dados.LogoData  ?? '',
+                        logoData: dados.logoData ?? dados.LogoData ?? '',
                     });
-                    // Persiste no localStorage para acesso rápido entre refreshes
                     localStorage.setItem('empresa_logo', dados.logoData ?? dados.LogoData ?? '');
                     localStorage.setItem('empresa_nome', dados.descricao ?? dados.Descricao ?? '');
                 }
             }
-        } catch (e) {
-            // Falha silenciosa — sidebar usa fallback ✂
+        } catch {
             const cachedLogo = localStorage.getItem('empresa_logo') || '';
             const cachedNome = localStorage.getItem('empresa_nome') || 'Barbearia MVP';
             if (cachedLogo || cachedNome) {
@@ -84,19 +71,145 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // Expõe função para atualizar a logo sem relogar (chamada após salvar empresa)
+    const applyToken = useCallback(async (newToken, apiRoles, accountType) => {
+        localStorage.setItem('token', newToken);
+        const acc =
+            accountType
+            || extractAccountTypeFromApi({ accountType })
+            || localStorage.getItem(AUTH_ACCOUNT_TYPE_KEY)
+            || (apiRoles?.some((r) => String(r).toLowerCase() === 'cliente') ? 'cliente' : 'barbearia');
+
+        persistSessionMeta(apiRoles, acc);
+
+        const u = await syncSessionFromServer(newToken, apiRoles, acc);
+        setToken(newToken);
+        setUser(u);
+        persistSessionMeta(u.roles, u.accountType);
+
+        if (isClienteUser(u)) {
+            setEmpresa(null);
+            try {
+                const res = await PortalClienteService.obterPerfil();
+                const p = res?.data ?? {};
+                setContaCliente({
+                    id: p.id ?? p.ID,
+                    nome: p.nome ?? p.Nome,
+                    telefone: p.telefone ?? p.Telefone,
+                    email: p.email ?? p.Email,
+                });
+            } catch {
+                setContaCliente(null);
+            }
+        } else {
+            setContaCliente(null);
+            await _fetchEmpresaAtual();
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!token) {
+            setUser(null);
+            setEmpresa(null);
+            setContaCliente(null);
+            setLoading(false);
+            return;
+        }
+
+        let cancelled = false;
+        (async () => {
+            try {
+                const storedRoles = localStorage.getItem(AUTH_ROLES_KEY);
+                const apiRoles = storedRoles ? JSON.parse(storedRoles) : undefined;
+                const accountType = localStorage.getItem(AUTH_ACCOUNT_TYPE_KEY) || undefined;
+                const u = await syncSessionFromServer(token, apiRoles, accountType);
+                if (cancelled) return;
+                setUser(u);
+                persistSessionMeta(u.roles, u.accountType);
+
+                if (isClienteUser(u)) {
+                    setEmpresa(null);
+                    try {
+                        const res = await PortalClienteService.obterPerfil();
+                        const p = res?.data ?? {};
+                        if (!cancelled) {
+                            setContaCliente({
+                                id: p.id ?? p.ID,
+                                nome: p.nome ?? p.Nome,
+                                telefone: p.telefone ?? p.Telefone,
+                                email: p.email ?? p.Email,
+                            });
+                        }
+                    } catch {
+                        if (!cancelled) setContaCliente(null);
+                    }
+                } else {
+                    setContaCliente(null);
+                    await _fetchEmpresaAtual();
+                }
+            } catch (e) {
+                console.error('Erro ao decodificar token', e);
+                localStorage.removeItem('token');
+                localStorage.removeItem(AUTH_ROLES_KEY);
+                localStorage.removeItem(AUTH_ACCOUNT_TYPE_KEY);
+                setToken(null);
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+
+        return () => { cancelled = true; };
+    }, [token]);
+
     const refreshEmpresa = () => _fetchEmpresaAtual();
+
+    const refreshContaCliente = async () => {
+        if (!user || !isClienteUser(user)) return;
+        try {
+            const res = await PortalClienteService.obterPerfil();
+            const p = res?.data ?? {};
+            setContaCliente({
+                id: p.id ?? p.ID,
+                nome: p.nome ?? p.Nome,
+                telefone: p.telefone ?? p.Telefone,
+                email: p.email ?? p.Email,
+            });
+        } catch { /* ignore */ }
+    };
+
+    const handleAuthResponse = async (data, fallbackAccountType) => {
+        const t = extractToken(data);
+        if (!t) throw new Error('Token não recebido.');
+        const apiRoles = extractRolesFromApi(data);
+        const accountType = extractAccountTypeFromApi(data) || fallbackAccountType;
+        await applyToken(t, apiRoles, accountType);
+        return buildUserFromAuth(decodeToken(t), apiRoles, accountType);
+    };
 
     const login = async (email, password) => {
         try {
             const data = await AuthService.login(email, password);
-            localStorage.setItem('token', data.token);
-            setToken(data.token);
+            const u = await handleAuthResponse(data);
             toast.success('Login concluído com sucesso!');
-            return true;
+            return { success: true, user: u };
         } catch (error) {
             toast.error(error.message || 'Erro de conexão com o servidor.');
-            return false;
+            return { success: false };
+        }
+    };
+
+    const loginGoogle = async (payload) => {
+        try {
+            const data = await AuthService.loginGoogle(payload);
+            if (data?.requiresTipoCadastro) {
+                return { success: false, requiresTipoCadastro: true };
+            }
+            const acc = payload.tipoCadastro === 'Cliente' ? 'cliente' : payload.tipoCadastro === 'Barbearia' ? 'barbearia' : undefined;
+            const u = await handleAuthResponse(data, acc);
+            toast.success('Login com Google concluído!');
+            return { success: true, user: u };
+        } catch (error) {
+            toast.error(error.message || 'Erro no login com Google.');
+            return { success: false };
         }
     };
 
@@ -107,30 +220,46 @@ export const AuthProvider = ({ children }) => {
             console.error(e);
         } finally {
             localStorage.removeItem('token');
+            localStorage.removeItem(AUTH_ROLES_KEY);
+            localStorage.removeItem(AUTH_ACCOUNT_TYPE_KEY);
             localStorage.removeItem('empresa_logo');
             localStorage.removeItem('empresa_nome');
             setToken(null);
             setUser(null);
             setEmpresa(null);
+            setContaCliente(null);
             toast.info('Você saiu.');
         }
     };
 
-    const registrar = async (email, password, confirmPassword) => {
+    const registrar = async (payload) => {
         try {
-            const data = await AuthService.registrar(email, password, confirmPassword);
-            localStorage.setItem('token', data.token);
-            setToken(data.token);
+            const data = await AuthService.registrar(payload);
+            const acc = payload.tipoCadastro === 'Cliente' ? 'cliente' : 'barbearia';
+            const u = await handleAuthResponse(data, acc);
             toast.success('Cadastro realizado e login concluído!');
-            return true;
+            return { success: true, user: u };
         } catch (error) {
             toast.error(error.message || 'Erro ao realizar cadastro.');
-            return false;
+            return { success: false };
         }
     };
 
     return (
-        <AuthContext.Provider value={{ user, empresa, token, loading, login, logout, registrar, refreshEmpresa, isAuthenticated: !!token }}>
+        <AuthContext.Provider value={{
+            user,
+            empresa,
+            contaCliente,
+            token,
+            loading,
+            login,
+            loginGoogle,
+            logout,
+            registrar,
+            refreshEmpresa,
+            refreshContaCliente,
+            isAuthenticated: !!token,
+        }}>
             {children}
         </AuthContext.Provider>
     );
@@ -138,8 +267,6 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
+    if (!context) throw new Error('useAuth must be used within an AuthProvider');
     return context;
 };

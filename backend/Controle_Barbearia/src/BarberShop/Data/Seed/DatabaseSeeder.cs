@@ -11,6 +11,7 @@ public sealed class DatabaseSeeder : IDatabaseSeeder
 {
     private static readonly string[] IdentityRoles =
     [
+        nameof(UserRoles.Cliente),
         nameof(UserRoles.Consulta),
         nameof(UserRoles.Usuario),
         nameof(UserRoles.Profissional),
@@ -123,6 +124,7 @@ public sealed class DatabaseSeeder : IDatabaseSeeder
         "BarberShop.Data.Scripts.006_agendamento_timezone_br.sql",
         "BarberShop.Data.Scripts.007_empresa_infinitepay.sql",
         "BarberShop.Data.Scripts.008_plataforma_assinatura.sql",
+        "BarberShop.Data.Scripts.009_auth_onboarding.sql",
     ];
 
     private async Task ApplyBusinessSchemaAsync(CancellationToken cancellationToken)

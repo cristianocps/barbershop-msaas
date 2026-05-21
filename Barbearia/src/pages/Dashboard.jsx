@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import {
     CalendarDays, Users, Scissors, Building2,
     ArrowRight, BarChart3, Star, TrendingUp
@@ -9,6 +9,8 @@ import { UsuariosService } from '../services/Acessos/UsuariosService';
 import { ServicosAppService } from '../services/Configuracoes/ServicosService';
 import { EmpresasService } from '../services/Configuracoes/EmpresasService';
 import { useAuth } from '../contexts/AuthContext';
+import { OnboardingService } from '../services/Configuracoes/OnboardingService';
+import { canManageAllEmpresas } from '../utils/userPolicy';
 
 /* ─── CSS embutido com media queries reais ─── */
 const css = `
@@ -184,6 +186,7 @@ export function Dashboard() {
     const [loadingRecent, setLoadingRecent] = useState(true);
     const [pendentes, setPendentes] = useState([]);
     const [loadingPendentes, setLoadingPendentes] = useState(true);
+    const [onboarding, setOnboarding] = useState(null);
 
     const now = new Date();
     const hour = now.getHours();
@@ -192,6 +195,7 @@ export function Dashboard() {
     const dateStr = now.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
     const PolicyLevels = { 'consulta': 1, 'usuario': 2, 'profissional': 3, 'gerente': 4, 'admin': 5, 'desenvolvedor': 6 };
+    const managesAllEmpresas = canManageAllEmpresas(user);
     let userMaxPolicy = 0;
     if (user?.roles && user.roles.length > 0) {
         user.roles.forEach(role => {
@@ -206,7 +210,7 @@ export function Dashboard() {
             AgendamentosService.carregarGrid(null, 0, 1),
             (userMaxPolicy >= PolicyLevels['admin'] ? UsuariosService.carregarGrid(null, 0, 1) : Promise.reject('deny')),
             (userMaxPolicy >= PolicyLevels['profissional'] ? ServicosAppService.carregarGrid(null, 0, 1) : Promise.reject('deny')),
-            (userMaxPolicy >= PolicyLevels['profissional'] ? EmpresasService.carregarGrid(null, 0, 1) : Promise.reject('deny')),
+            (managesAllEmpresas ? EmpresasService.carregarGrid(null, 0, 1) : Promise.reject('deny')),
         ]).then(([ag, us, sv, em]) => {
             const pick = (r) => r.status === 'fulfilled' ? (r.value?.recordsTotal ?? r.value?.RecordsTotal ?? 0) : '–';
             setCounts({ agendamentos: pick(ag), usuarios: pick(us), servicos: pick(sv), empresas: pick(em) });
@@ -222,13 +226,19 @@ export function Dashboard() {
             .then(res => setPendentes(res?.Data ?? res?.data ?? res ?? []))
             .catch(() => setPendentes([]))
             .finally(() => setLoadingPendentes(false));
+
+        OnboardingService.obterStatus()
+            .then(res => setOnboarding(res?.data ?? res?.Data ?? null))
+            .catch(() => setOnboarding(null));
     }, []);
 
     const stats = [
         { label: 'Agendamentos', value: counts.agendamentos, icon: <CalendarDays size={20} />, color: '#3b82f6', link: '/agendamentos', minPolicy: 'usuario' },
         { label: 'Usuários', value: counts.usuarios, icon: <Users size={20} />, color: '#8b5cf6', link: '/usuarios', minPolicy: 'admin' },
         { label: 'Serviços', value: counts.servicos, icon: <Scissors size={20} />, color: '#f6b001', link: '/servicos', minPolicy: 'profissional' },
-        { label: 'Barbearias', value: counts.empresas, icon: <Building2 size={20} />, color: '#ef4444', link: '/empresas', minPolicy: 'profissional' },
+        ...(managesAllEmpresas
+            ? [{ label: 'Barbearias', value: counts.empresas, icon: <Building2 size={20} />, color: '#ef4444', link: '/empresas', minPolicy: 'admin' }]
+            : [{ label: 'Minha unidade', value: '—', icon: <Building2 size={20} />, color: '#ef4444', link: '/minha-barbearia', minPolicy: 'profissional' }]),
     ].filter(s => userMaxPolicy >= (PolicyLevels[s.minPolicy] || 0));
 
     const quickLinks = [
@@ -236,7 +246,9 @@ export function Dashboard() {
         { label: 'Financeiro', icon: <TrendingUp size={18} />, color: '#16a34a', to: '/financeiro', minPolicy: 'gerente' },
         { label: 'Usuários', icon: <Users size={18} />, color: '#8b5cf6', to: '/usuarios', minPolicy: 'admin' },
         { label: 'Serviços', icon: <Scissors size={18} />, color: '#f6b001', to: '/servicos', minPolicy: 'profissional' },
-        { label: 'Barbearias', icon: <Building2 size={18} />, color: '#ef4444', to: '/empresas', minPolicy: 'profissional' },
+        ...(managesAllEmpresas
+            ? [{ label: 'Barbearias', icon: <Building2 size={18} />, color: '#ef4444', to: '/empresas', minPolicy: 'admin' }]
+            : [{ label: 'Minha barbearia', icon: <Building2 size={18} />, color: '#ef4444', to: '/minha-barbearia', minPolicy: 'profissional' }]),
     ].filter(s => userMaxPolicy >= (PolicyLevels[s.minPolicy] || 0));
 
     return (
@@ -270,6 +282,41 @@ export function Dashboard() {
                         </p>
                     </div>
                 </div>
+
+                {onboarding && !onboarding.onboardingCompleto && (onboarding.percentual ?? 0) < 100 && (
+                    <div style={{
+                        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                        borderRadius: 16,
+                        padding: '1.25rem 1.5rem',
+                        marginBottom: '1.5rem',
+                        color: '#fff',
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        gap: '1rem',
+                        justifyContent: 'space-between',
+                    }}>
+                        <div>
+                            <strong style={{ fontSize: '1.05rem' }}>Complete a configuração inicial</strong>
+                            <p style={{ margin: '0.35rem 0 0', opacity: 0.85, fontSize: '0.9rem' }}>
+                                Progresso: {onboarding.percentual ?? 0}% — serviços, barbeiros e pagamentos
+                            </p>
+                        </div>
+                        <Link
+                            to="/onboarding"
+                            style={{
+                                background: '#f6b001',
+                                color: '#1a1a2e',
+                                padding: '10px 18px',
+                                borderRadius: 10,
+                                fontWeight: 700,
+                                textDecoration: 'none',
+                            }}
+                        >
+                            Continuar setup
+                        </Link>
+                    </div>
+                )}
 
                 {/* ── Stats Grid ── */}
                 <div className="dash-stats-grid" style={{ marginBottom: '1.5rem' }}>

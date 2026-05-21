@@ -260,9 +260,13 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
 
                 // ── 5.1 Upsert cliente por telefone + empresa ──
                 var _queryCliente = @"
-                    INSERT INTO public.clientes (idempresa, idusuario, descricao, telefone, dtcriacao, status)
-                    VALUES (@IdEmpresa, 0, @NomeCliente, @Telefone, NOW(), 1)
+                    INSERT INTO public.clientes (idempresa, idusuario, idconta, descricao, telefone, dtcriacao, status)
+                    VALUES (@IdEmpresa, 0, @IdConta, @NomeCliente, @Telefone, NOW(), 1)
                     ON CONFLICT DO NOTHING;
+                    UPDATE public.clientes
+                    SET idconta = COALESCE(@IdConta, idconta)
+                    WHERE idempresa = @IdEmpresa
+                      AND ((telefone = @Telefone AND @Telefone <> '') OR (descricao = @NomeCliente AND @Telefone = ''));
                     SELECT id FROM public.clientes
                     WHERE idempresa = @IdEmpresa
                       AND ((telefone = @Telefone AND @Telefone <> '') OR (descricao = @NomeCliente AND @Telefone = ''))
@@ -272,6 +276,7 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                     _queryCliente, new
                     {
                         dados.IdEmpresa,
+                        dados.IdConta,
                         NomeCliente = dados.NomeCliente.VarcharToSQL(),
                         Telefone    = _telefoneClean
                     });

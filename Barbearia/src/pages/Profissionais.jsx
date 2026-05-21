@@ -8,6 +8,8 @@ import { ProfissionaisService } from '../services/Configuracoes/ProfissionaisSer
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useConfirm } from '../components/UI/ConfirmModal';
+import { useOnboardingTour } from '../hooks/useOnboardingTour';
+import { TOURS } from '../config/onboardingTours';
 
 export function Profissionais() {
     const [data, setData] = useState([]);
@@ -21,6 +23,12 @@ export function Profissionais() {
     const { user } = useAuth();
     const canInativar = (user?.userMaxPolicy ?? 0) >= 4;
     const { confirmModal, askConfirm } = useConfirm();
+    const { iniciarTour } = useOnboardingTour();
+
+    useEffect(() => {
+        const steps = TOURS.profissionais({ hasNewButton: true });
+        if (steps.length) iniciarTour('profissionais', steps);
+    }, [iniciarTour]);
 
     // Modal state
     const [modalOpen, setModalOpen] = useState(false);
@@ -199,6 +207,8 @@ export function Profissionais() {
                 title="Profissionais"
                 subtitle="Gerencie os barbeiros da barbearia"
                 newLabel="Novo Profissional"
+                headerTourId="profissionais-page-intro"
+                newButtonTourId="profissionais-novo"
                 onNew={openNew}
             />
             <PageSearch
@@ -207,6 +217,7 @@ export function Profissionais() {
                 onSearch={loadData}
                 placeholder="Buscar por nome ou telefone..."
             />
+            <div data-tour="profissionais-grid">
             <DataGrid
                 columns={columns}
                 data={data}
@@ -223,6 +234,7 @@ export function Profissionais() {
                 emptyTitle="Nenhum profissional"
                 emptyMessage="Cadastre os barbeiros da sua empresa."
             />
+            </div>
 
             <FormModal
                 open={modalOpen}

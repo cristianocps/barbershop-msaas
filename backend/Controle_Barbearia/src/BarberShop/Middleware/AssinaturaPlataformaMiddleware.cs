@@ -29,7 +29,14 @@ namespace BarberShop.Middleware
             }
 
             if (context.User.Identity?.IsAuthenticated == true
-                && context.User.IsInRole("Desenvolvedor"))
+                && (context.User.IsInRole("Desenvolvedor") || context.User.IsInRole("Cliente")))
+            {
+                await _next(context).ConfigureAwait(false);
+                return;
+            }
+
+            var pathLower = path.ToLowerInvariant();
+            if (pathLower.StartsWith("/api/portalcliente", StringComparison.Ordinal))
             {
                 await _next(context).ConfigureAwait(false);
                 return;

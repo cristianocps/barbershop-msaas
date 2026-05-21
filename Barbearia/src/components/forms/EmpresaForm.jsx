@@ -1,16 +1,21 @@
 import React, { useRef, useState } from 'react';
 import { FormField, FormRow } from '../UI/FormModal';
 import { ImagePlus, X } from 'lucide-react';
+import { getSlugPrefixLabel } from '../../utils/publicSiteUrl';
 
-const MAX_SIZE_MB = 2; // Base64 de 2MB ≈ 2.7MB de texto — dentro do limite de 20MB do backend
+const MAX_SIZE_MB = 2;
 
-
-export function EmpresaForm({ form, onChange }) {
+/**
+ * @param {'full'|'minha'} variant — minha: campos obrigatórios alinhados à API; oculta status
+ */
+export function EmpresaForm({ form, onChange, variant = 'full', fieldErrors = {} }) {
+    const isMinha = variant === 'minha';
     const set = (field, value) => onChange({ ...form, [field]: value });
     const fileInputRef = useRef(null);
     const [dragOver, setDragOver] = useState(false);
+    const slugPrefix = getSlugPrefixLabel();
+    const err = (key) => fieldErrors[key];
 
-    // Converte File → Base64 e salva em form.logoData
     const handleImageFile = (file) => {
         if (!file) return;
         if (!file.type.startsWith('image/')) {
@@ -22,15 +27,14 @@ export function EmpresaForm({ form, onChange }) {
             return;
         }
         const reader = new FileReader();
-        reader.onload = (e) => set('logoData', e.target.result); // data:image/...;base64,...
+        reader.onload = (e) => set('logoData', e.target.result);
         reader.readAsDataURL(file);
     };
 
     const handleDrop = (e) => {
         e.preventDefault();
         setDragOver(false);
-        const file = e.dataTransfer.files?.[0];
-        handleImageFile(file);
+        handleImageFile(e.dataTransfer.files?.[0]);
     };
 
     const removeLogo = (e) => {
@@ -41,7 +45,6 @@ export function EmpresaForm({ form, onChange }) {
 
     return (
         <>
-            {/* ── LOGO ── */}
             <FormField label="Logo da Barbearia">
                 <div
                     onClick={() => fileInputRef.current?.click()}
@@ -61,7 +64,6 @@ export function EmpresaForm({ form, onChange }) {
                         position: 'relative',
                     }}
                 >
-                    {/* Preview ou placeholder */}
                     {form.logoData ? (
                         <>
                             <img
@@ -124,7 +126,7 @@ export function EmpresaForm({ form, onChange }) {
                 </div>
             </FormField>
 
-            <FormField label="Nome da Empresa" required>
+            <FormField label="Nome da Empresa" required error={err('descricao')}>
                 <input
                     className="fm-input"
                     type="text"
@@ -132,10 +134,11 @@ export function EmpresaForm({ form, onChange }) {
                     value={form.descricao || ''}
                     onChange={e => set('descricao', e.target.value)}
                     autoFocus
+                    maxLength={150}
                 />
             </FormField>
 
-            <FormField label="CNPJ">
+            <FormField label="CNPJ" error={err('cnpj')}>
                 <input
                     className="fm-input"
                     type="text"
@@ -145,31 +148,52 @@ export function EmpresaForm({ form, onChange }) {
                 />
             </FormField>
 
-            <FormField label="Link de Agendamento (Slug)" hint="Ex: barbearia-do-jeferson">
+            <FormField
+                label="Link de Agendamento (Slug)"
+                required={isMinha}
+                hint="URL pública da vitrine — só letras minúsculas, números e hífens"
+                error={err('slug')}
+            >
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span style={{ padding: '0 10px', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRight: 'none', borderRadius: '8px 0 0 8px', color: '#6b7280', fontSize: '0.875rem' }}>site.com/</span>
+                    <span style={{
+                        padding: '0 10px',
+                        background: '#f3f4f6',
+                        border: '1px solid #e5e7eb',
+                        borderRight: 'none',
+                        borderRadius: '8px 0 0 8px',
+                        color: '#6b7280',
+                        fontSize: '0.8rem',
+                        whiteSpace: 'nowrap',
+                        maxWidth: '45%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                    }}>
+                        {slugPrefix}
+                    </span>
                     <input
                         className="fm-input"
-                        style={{ borderRadius: '0 8px 8px 0' }}
+                        style={{ borderRadius: '0 8px 8px 0', flex: 1, minWidth: 0 }}
                         type="text"
                         placeholder="nome-da-barbearia"
                         value={form.slug || ''}
                         onChange={e => set('slug', e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''))}
+                        maxLength={100}
                     />
                 </div>
             </FormField>
 
             <FormRow>
-                <FormField label="Telefone">
+                <FormField label="Telefone" required={isMinha} error={err('telefone')}>
                     <input
                         className="fm-input"
                         type="tel"
                         placeholder="(00) 00000-0000"
                         value={form.telefone || ''}
                         onChange={e => set('telefone', e.target.value)}
+                        maxLength={15}
                     />
                 </FormField>
-                <FormField label="E-mail">
+                <FormField label="E-mail" error={err('email')}>
                     <input
                         className="fm-input"
                         type="email"
@@ -180,27 +204,29 @@ export function EmpresaForm({ form, onChange }) {
                 </FormField>
             </FormRow>
 
-            <FormField label="Endereço">
+            <FormField label="Endereço" required={isMinha} error={err('endereco')}>
                 <input
                     className="fm-input"
                     type="text"
                     placeholder="Rua, Número - Bairro"
                     value={form.endereco || ''}
                     onChange={e => set('endereco', e.target.value)}
+                    maxLength={60}
                 />
             </FormField>
 
             <FormRow>
-                <FormField label="Cidade">
+                <FormField label="Cidade" required={isMinha} error={err('cidade')}>
                     <input
                         className="fm-input"
                         type="text"
                         placeholder="Ex: São Paulo"
                         value={form.cidade || ''}
                         onChange={e => set('cidade', e.target.value)}
+                        maxLength={150}
                     />
                 </FormField>
-                <FormField label="Estado (UF)">
+                <FormField label="Estado (UF)" error={err('estado')}>
                     <input
                         className="fm-input"
                         type="text"
@@ -212,16 +238,18 @@ export function EmpresaForm({ form, onChange }) {
                 </FormField>
             </FormRow>
 
-            <FormField label="Status">
-                <select
-                    className="fm-select"
-                    value={form.status ?? 1}
-                    onChange={e => set('status', parseInt(e.target.value))}
-                >
-                    <option value={1}>Ativa</option>
-                    <option value={0}>Inativa</option>
-                </select>
-            </FormField>
+            {!isMinha && (
+                <FormField label="Status">
+                    <select
+                        className="fm-select"
+                        value={form.status ?? 1}
+                        onChange={e => set('status', parseInt(e.target.value, 10))}
+                    >
+                        <option value={1}>Ativa</option>
+                        <option value={0}>Inativa</option>
+                    </select>
+                </FormField>
+            )}
 
             <FormField label="Infinite Pay — handle" hint="Infinite Tag desta barbearia (ex.: $minha_loja)">
                 <input

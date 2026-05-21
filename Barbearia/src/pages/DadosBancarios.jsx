@@ -11,6 +11,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useConfirm } from '../components/UI/ConfirmModal';
 import { usePasswordPrompt } from '../components/UI/PasswordPromptModal';
 import { Eye, EyeOff } from 'lucide-react';
+import { useOnboardingTour } from '../hooks/useOnboardingTour';
+import { TOURS } from '../config/onboardingTours';
 
 export function DadosBancarios() {
     const [activeTab, setActiveTab] = useState('chaves'); // 'chaves' | 'tipos'
@@ -28,6 +30,12 @@ export function DadosBancarios() {
     const { user } = useAuth();
     const canInativar = (user?.userMaxPolicy ?? 0) >= 4;
     const { confirmModal, askConfirm } = useConfirm();
+    const { iniciarTour } = useOnboardingTour();
+
+    useEffect(() => {
+        const steps = TOURS.pagamentos({ hasNewButton: true });
+        if (steps.length) iniciarTour('pagamentos', steps);
+    }, [iniciarTour]);
     const { passwordModal, askPassword } = usePasswordPrompt();
 
     const [decryptedKeys, setDecryptedKeys] = useState({}); // id -> string
@@ -313,10 +321,12 @@ export function DadosBancarios() {
                 title="Dados Bancários"
                 subtitle="Gerenciamento de chaves PIX"
                 newLabel={activeTab === 'chaves' ? "Nova Chave PIX" : "Novo Tipo"}
+                headerTourId="pagamentos-page-intro"
+                newButtonTourId="pagamentos-novo"
                 onNew={openNew}
             />
-            
-            <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '20px' }}>
+
+            <div data-tour="pagamentos-tabs" style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '20px' }}>
                 <div style={tabStyle(activeTab === 'chaves')} onClick={() => setActiveTab('chaves')}>
                     <Key size={18} /> Chaves PIX
                 </div>

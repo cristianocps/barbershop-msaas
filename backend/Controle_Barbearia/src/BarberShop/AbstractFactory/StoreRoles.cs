@@ -1,6 +1,8 @@
-﻿using BarberShop.Dominio.Interfaces.Base;
+using BarberShop.Dominio.Interfaces.Base;
 using System.Globalization;
+using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using static BarberShop.Dominio.Enuns.IGroupPolicies;
 
 namespace BarberShop.AbstractFactory
@@ -8,49 +10,82 @@ namespace BarberShop.AbstractFactory
     public sealed class StoreRoles : IStoreRoles
     {
         public bool IsAuthorized { get; set; }
+        public IList<string> Roles { get; set; } = new List<string>();
+
         public StoreRoles(IUser user)
         {
-            Roles = new List<string>();
-
             if (user == null)
                 return;
 
-            if (user.ClaimsIdentity == null)
-                return;
+            var claims = (user.GetClaimsIdentity() ?? Enumerable.Empty<Claim>()).ToList();
+            if (claims.Count == 0 && user.ClaimsIdentity?.Claims != null)
+                claims = user.ClaimsIdentity.Claims.ToList();
 
-            if (user.ClaimsIdentity.Claims == null)
-                return;
-            
-            var _roles = user.ClaimsIdentity.Claims.Where(x => x.Type.Trim().ToLower(culture: CultureInfo.CurrentCulture).Contains("identity/claims/role")).Select(r => r.Value?.ToString().Trim()).ToList();
-            if (_roles.Any())
-                foreach (var role in _roles)
-                    Roles.Add(role?.ToString()?.Trim()?.ToLower(culture: CultureInfo.CurrentCulture) ?? "");
+            CarregarRolesDasClaims(claims);
         }
 
-        #region Hierarquia
+        public void CarregarRolesDoBanco(IEnumerable<string> roleNames)
+        {
+            Roles.Clear();
+            foreach (var role in roleNames)
+            {
+                var normalized = NormalizeString(role);
+                if (!string.IsNullOrEmpty(normalized))
+                    Roles.Add(normalized);
+            }
+        }
 
-        /*
-         *  Hierarquia resolve
-            Ou seja, se Administrador tiver nível numérico maior que User (e tem), 
-            e você está comparando usando >=, então:
-            Situação	Resultado
-            Você é Administrador	✅ Passa [Authorize(Roles = "...")]
-            policy exigido é User (nível menor)	✅ IsInPolicy também libera
+        private void CarregarRolesDasClaims(IReadOnlyList<Claim> claims)
+        {
+            Roles.Clear();
 
-        Permite usuários de nível superior acessarem recursos de nível inferior
-        Bloqueia usuários de nível inferior tentarem acessar rotas de nível superior
-        
-         */
-        #endregion 
+            foreach (var c in claims)
+            {
+                var t = c.Type.Trim().ToLowerInvariant();
+                if (t.Contains("identity/claims/role", StringComparison.Ordinal) || t == "role" || t == "roles")
+                {
+                    var v = NormalizeString(c.Value ?? "");
+                    if (!string.IsNullOrEmpty(v) && !Roles.Contains(v))
+                        Roles.Add(v);
+                }
+            }
+
+            if (Roles.Count > 0)
+                return;
+
+            var appRoles = claims.FirstOrDefault(c =>
+                string.Equals(c.Type, "app_roles", StringComparison.OrdinalIgnoreCase))?.Value;
+
+            if (string.IsNullOrWhiteSpace(appRoles))
+                return;
+
+            try
+            {
+                var parsed = JsonSerializer.Deserialize<List<string>>(appRoles);
+                if (parsed == null)
+                    return;
+
+                foreach (var role in parsed)
+                {
+                    var v = NormalizeString(role ?? "");
+                    if (!string.IsNullOrEmpty(v) && !Roles.Contains(v))
+                        Roles.Add(v);
+                }
+            }
+            catch
+            {
+                // token legado ou claim malformado
+            }
+        }
 
         public bool IsInPolicy(Policy roleName)
         {
             IsAuthorized = false;
-            if (Roles == null || !Roles.Any())
+            if (Roles == null || Roles.Count == 0)
                 return false;
 
-            int userMaxPolicy = 0;
-            int requiredPolicy = (int)roleName;
+            var userMaxPolicy = 0;
+            var requiredPolicy = (int)roleName;
 
             foreach (var role in Roles)
             {
@@ -66,13 +101,10 @@ namespace BarberShop.AbstractFactory
         public bool IsInRole(UserRoles roleName)
         {
             IsAuthorized = false;
-            var _roleName = roleName.ToString().ToLower(culture: CultureInfo.CurrentCulture);
-
-            IsAuthorized = Roles.Contains(_roleName);
+            var role = NormalizeString(roleName.ToString());
+            IsAuthorized = Roles.Contains(role);
             return IsAuthorized;
         }
-        public IList<string> Roles { get; set; } = new List<string>();
-
 
         public static string NormalizeString(string input)
         {
@@ -92,13 +124,13 @@ namespace BarberShop.AbstractFactory
             return sb.ToString().ToLowerInvariant();
         }
 
-
         private static Policy? MapRoleNameToPolicy(string role)
         {
             var normalized = NormalizeString(role);
 
             return normalized switch
             {
+                "cliente" => Policy.Cliente,
                 "consulta" => Policy.Consulta,
                 "usuario" => Policy.Usuario,
                 "profissional" => Policy.Profissional,
@@ -108,11 +140,5 @@ namespace BarberShop.AbstractFactory
                 _ => null
             };
         }
-
     }
-
-
-
-
-
 }
