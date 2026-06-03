@@ -88,6 +88,7 @@ services:
       PlataformaBilling__WebhookUrl: ${PLATAFORMA_INFINITEPAY_WEBHOOK_URL:-https://app.barbershopp.com.br/api/webhooks/infinitepay/plataforma}
       PlataformaBilling__MensalidadeCentavos: ${PLATAFORMA_MENSALIDADE_CENTAVOS:-9900}
       PlataformaBilling__TrialDias: ${PLATAFORMA_TRIAL_DIAS:-14}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     depends_on:
       postgres:
         condition: service_healthy

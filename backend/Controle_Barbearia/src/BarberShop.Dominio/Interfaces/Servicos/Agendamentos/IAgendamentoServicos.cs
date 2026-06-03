@@ -17,6 +17,7 @@ namespace BarberShop.Dominio.Interfaces.Servicos.Agendamentos
         Task<RetornoGridPaginado<Agendamento>> CarregarGridAgendamentos(DataTableSearch search, int start, int draw, int? length = 10);
         Task<Agendamento> Editar(long idItem);
         Task<IEnumerable<AgendamentoPendenteDTO>> GetAgendamentosPendentesHoje();
+        Task<IEnumerable<AgendamentoPendenteDTO>> GetAgendamentosProximos();
         Task<IEnumerable<AgendamentoCalendarioDTO>> CarregarCalendario(DateTime inicio, DateTime fim);
         Task ConfirmarAgendamentoAsync(long id);
         Task CancelarAgendamentoAsync(long id, string? motivo);

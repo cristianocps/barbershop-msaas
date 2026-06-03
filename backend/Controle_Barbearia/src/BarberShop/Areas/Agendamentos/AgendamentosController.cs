@@ -152,6 +152,20 @@ namespace BarberShop.Areas.Agendamentos
             catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
         }
 
+        [HttpGet("proximos")]
+        public async Task<JsonResult> GetProximos()
+        {
+            try
+            {
+                var _result = await _agendamentoServicos.GetAgendamentosProximos();
+                var _return = await ResponseJson(ResponseJsonTypes.Success, "", _result).ConfigureAwait(false);
+
+                return await Task.FromResult(_return).ConfigureAwait(false);
+            }
+            catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }
+            catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }
+        }
+
         [HttpPost("{id}/confirmar")]
         public async Task<JsonResult> Confirmar(long id)
         {

@@ -3,6 +3,32 @@ import { AgendamentosService } from '../services/Agendamentos/AgendamentosServic
 import { useAuth } from '../contexts/AuthContext';
 import { useAssinatura } from '../contexts/AssinaturaContext';
 
+const DISMISSED_KEY = 'dismissed_agendamentos';
+
+function getDismissedIds() {
+    try {
+        const raw = sessionStorage.getItem(DISMISSED_KEY);
+        return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch {
+        return new Set();
+    }
+}
+
+function addDismissedId(id) {
+    try {
+        const set = getDismissedIds();
+        set.add(String(id));
+        sessionStorage.setItem(DISMISSED_KEY, JSON.stringify([...set]));
+    } catch {
+        // ignore
+    }
+}
+
+function filterDismissed(list) {
+    const dismissed = getDismissedIds();
+    return list.filter(a => !dismissed.has(String(a.id || a.Id || a.ID)));
+}
+
 export function useAgendamentoAlert() {
     const { isAuthenticated } = useAuth();
     const { bloqueado, isDesenvolvedor } = useAssinatura();
@@ -14,20 +40,30 @@ export function useAgendamentoAlert() {
         if (!isAuthenticated || (bloqueado && !isDesenvolvedor)) return;
 
         try {
-            const res = await AgendamentosService.getPendentesHoje();
-            const list = res?.data || res?.Data || [];
-            
-            console.log('[Poll] Verificando pendências:', list.length);
-            
-            // Sincroniza a lista de cards com o que está no banco agora
-            setNewAgendamentos(list);
-            
-            if (list.length > 0) {
-                // Toca o som apenas se aparecer um ID MAIOR do que o que já vimos antes
-                const maxIdNoBanco = Math.max(...list.map(a => (a.id || a.Id || a.ID || 0)));
-                
+            const [pendentesRes, proximosRes] = await Promise.all([
+                AgendamentosService.getPendentesHoje(),
+                AgendamentosService.getProximos(),
+            ]);
+
+            const pendentesRaw = pendentesRes?.data || pendentesRes?.Data || [];
+            const proximosRaw = proximosRes?.data || proximosRes?.Data || [];
+
+            const pendentes = filterDismissed(pendentesRaw).map(a => ({
+                ...a,
+                tipoAlerta: 'pendente',
+            }));
+            const proximos = filterDismissed(proximosRaw).map(a => ({
+                ...a,
+                tipoAlerta: 'proximo',
+            }));
+
+            const combined = [...pendentes, ...proximos];
+
+            setNewAgendamentos(combined);
+
+            if (pendentes.length > 0) {
+                const maxIdNoBanco = Math.max(...pendentes.map(a => (a.id || a.Id || a.ID || 0)));
                 if (maxIdNoBanco > lastNotifiedIdRef.current) {
-                    console.log('[Poll] NOVO agendamento real detectado! Tocando som.');
                     playNotificationSound();
                     lastNotifiedIdRef.current = maxIdNoBanco;
                     localStorage.setItem('last_notified_id', String(maxIdNoBanco));
@@ -50,10 +86,7 @@ export function useAgendamentoAlert() {
 
     useEffect(() => {
         if (isAuthenticated && !(bloqueado && !isDesenvolvedor)) {
-            // Executa imediatamente ao carregar
             checkNewAgendamentos();
-            
-            // Inicia o intervalo (30 segundos)
             pollInterval.current = setInterval(checkNewAgendamentos, 30000);
         }
 
@@ -63,7 +96,9 @@ export function useAgendamentoAlert() {
     }, [isAuthenticated, bloqueado, isDesenvolvedor, checkNewAgendamentos]);
 
     const removeAlert = (id) => {
-        setNewAgendamentos(prev => prev.filter(a => (a.id || a.Id || a.ID) !== id));
+        const key = id;
+        addDismissedId(key);
+        setNewAgendamentos(prev => prev.filter(a => (a.id || a.Id || a.ID) !== key));
     };
 
     return { newAgendamentos, removeAlert };

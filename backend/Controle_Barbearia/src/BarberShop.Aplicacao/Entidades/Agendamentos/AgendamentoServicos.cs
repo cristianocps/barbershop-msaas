@@ -54,6 +54,11 @@ namespace BarberShop.Aplicacao.Entidades.Agendamentos
             return await _agendamentoRepositorio.GetAgendamentosPendentesHoje().ConfigureAwait(false);
         }
 
+        public async Task<IEnumerable<AgendamentoPendenteDTO>> GetAgendamentosProximos()
+        {
+            return await _agendamentoRepositorio.GetAgendamentosProximos().ConfigureAwait(false);
+        }
+
         public async Task<IEnumerable<AgendamentoCalendarioDTO>> CarregarCalendario(DateTime inicio, DateTime fim)
         {
             return await _agendamentoRepositorio.CarregarCalendario(inicio, fim).ConfigureAwait(false);

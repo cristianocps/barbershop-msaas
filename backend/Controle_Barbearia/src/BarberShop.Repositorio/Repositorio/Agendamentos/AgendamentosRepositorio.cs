@@ -456,6 +456,47 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
             }
         }
 
+        public async Task<IEnumerable<AgendamentoPendenteDTO>> GetAgendamentosProximos()
+        {
+            try
+            {
+                var agora = DateTime.Now;
+                var ate = agora.AddHours(2);
+
+                var query = $@"
+                    SELECT 
+                        a.id AS Id,
+                        a.descricao AS Descricao,
+                        COALESCE(c.descricao, a.descricao) AS NomeCliente,
+                        a.telefone AS Telefone,
+                        a.dtagendamento AS DtAgendamento,
+                        a.comprovante_pix AS ComprovantePix,
+                        COALESCE(p.descricao, 'Não definido') AS NomeProfissional,
+                        COALESCE((
+                            SELECT STRING_AGG(s.descricao, ' + ')
+                            FROM public.agendamento_itens ai
+                            JOIN public.servicos s ON s.id = ai.idservico
+                            WHERE ai.idagendamento = a.id
+                        ), 'Serviço não informado') AS Servico
+                    FROM public.agendamentos a
+                    LEFT JOIN public.clientes c ON c.id = a.idcliente
+                    LEFT JOIN public.profissionais p ON p.id = a.idprofissional
+                    WHERE a.idempresa = {_identidade.IdEmpresaLogado}
+                      AND a.status = 1
+                      AND a.dtagendamento >= @DtAgora
+                      AND a.dtagendamento <= @DtAte
+                    ORDER BY a.dtagendamento ASC;
+                ";
+
+                var result = await _dbConnectionFactory.QueryAsync<AgendamentoPendenteDTO>(query, new { DtAgora = agora, DtAte = ate });
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new TratamentoExcecao(ex.Message.Traduzir());
+            }
+        }
+
         public async Task<IEnumerable<AgendamentoCalendarioDTO>> CarregarCalendario(DateTime inicio, DateTime fim)
         {
             try

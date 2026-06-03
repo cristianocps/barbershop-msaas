@@ -1,10 +1,10 @@
 import React from 'react';
-import { Bell, X, Eye, CalendarDays, User } from 'lucide-react';
+import { Bell, X, Eye, CalendarDays, User, Clock } from 'lucide-react';
 import { useAgendamentoAlert } from '../../hooks/useAgendamentoAlert';
 import { useNavigate } from 'react-router-dom';
 
 function SingleAlert({ ag, removeAlert, navigate }) {
-    // Card persistente: só sai se o usuário fechar ou clicar em Ver Painel
+    const isProximo = ag.tipoAlerta === 'proximo';
 
     const handleAction = () => {
         removeAlert(ag.id || ag.Id || ag.ID);
@@ -15,12 +15,17 @@ function SingleAlert({ ag, removeAlert, navigate }) {
         ? new Date(ag?.dtAgendamento || ag?.DtAgendamento).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
         : 'Horário não informado';
 
+    const borderColor = isProximo ? '#ef4444' : '#f6b001';
+    const badgeColor = isProximo ? '#fee2e2' : '#fef3c7';
+    const badgeText = isProximo ? '#dc2626' : '#f59e0b';
+    const labelText = isProximo ? 'Em breve!' : 'Novo Agendamento!';
+
     return (
         <div style={{
             background: 'white',
             borderRadius: '16px',
             boxShadow: '0 15px 35px rgba(0,0,0,0.15)',
-            borderLeft: '5px solid #f6b001',
+            borderLeft: `5px solid ${borderColor}`,
             padding: '20px',
             marginBottom: '15px',
             width: '380px',
@@ -43,11 +48,25 @@ function SingleAlert({ ag, removeAlert, navigate }) {
             </button>
 
             {/* Cabeçalho do Alerta */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', marginBottom: '12px' }}>
-                <Bell size={18} fill="#fef3c7" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: badgeText, marginBottom: '12px' }}>
+                <Bell size={18} fill={badgeColor} />
                 <strong style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 900 }}>
-                    Novo Agendamento!
+                    {labelText}
                 </strong>
+                {isProximo && (
+                    <span style={{
+                        marginLeft: 'auto',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        color: '#dc2626',
+                        background: '#fee2e2',
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                    }}>
+                        <Clock size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
+                        Próximo
+                    </span>
+                )}
             </div>
 
             {/* Nome do Cliente */}
@@ -59,7 +78,7 @@ function SingleAlert({ ag, removeAlert, navigate }) {
             <div style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '15px', lineHeight: '1.5' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                        <span style={{ color: '#f6b001', fontWeight: 700 }}>Serviço:</span>
+                        <span style={{ color: isProximo ? '#ef4444' : '#f6b001', fontWeight: 700 }}>Serviço:</span>
                         <span style={{ color: '#1e293b', fontWeight: 600 }}>{ag?.Servico || ag?.servico || 'Não informado'}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -129,7 +148,7 @@ export function AgendamentoAlert() {
         }}>
             {newAgendamentos.filter(a => a !== null && a !== undefined).map((ag) => (
                 <SingleAlert 
-                    key={ag.id || ag.Id || ag.ID || Math.random()} 
+                    key={`${ag.tipoAlerta || 'alert'}-${ag.id || ag.Id || ag.ID || Math.random()}`} 
                     ag={ag} 
                     removeAlert={removeAlert} 
                     navigate={navigate} 
@@ -141,7 +160,6 @@ export function AgendamentoAlert() {
                     from { transform: translate(-50%, -50px); opacity: 0; }
                     to { transform: translate(-50%, 0); opacity: 1; }
                 }
-                /* Ajuste da animação de entrada para centralizado */
                 @keyframes slideDown {
                     0% { transform: translateY(-30px) scale(0.9); opacity: 0; }
                     100% { transform: translateY(0) scale(1); opacity: 1; }

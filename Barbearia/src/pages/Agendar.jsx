@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Scissors, Clock, User, Calendar, Check, Bell, Settings, ArrowLeft, Loader2 } from 'lucide-react';
+import { Scissors, Clock, User, Calendar, Check, Bell, Settings, ArrowLeft, Loader2, LogIn } from 'lucide-react';
 import { format, addDays, startOfToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { VitrineService } from '../services/Agendamentos/VitrineService';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { LoginModal } from '../components/Auth/LoginModal';
 import '../index.css';
 
 /**
@@ -47,6 +48,7 @@ function App() {
   const [chavesPix, setChavesPix] = useState([]);
   const [comprovanteBase64, setComprovanteBase64] = useState(null);
   const [indisponivel, setIndisponivel] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // 1. Carregar Dados Iniciais (Empresa, Serviços, Profissionais)
   useEffect(() => {
@@ -166,7 +168,7 @@ function App() {
         idProfissional: selectedProfessional.id,
         idConta: contaCliente?.id ?? undefined,
         nomeCliente: customer.name,
-        telefoneCliente: '',
+        telefoneCliente: contaCliente?.telefone || customer.phone || '',
         observacao: customer.notes || '',
         comprovantePix: comprovanteBase64,
         dtAgendamento: `${format(selectedDate, 'yyyy-MM-dd')}T${selectedTime}:00`,
@@ -518,6 +520,44 @@ function App() {
         {passo === 4 && (
           <section className="step-section show-right" style={{ maxWidth: '650px', margin: '0 auto' }}>
             <h2 className="step-title" style={{ justifyContent: 'center' }}><Check size={20} /> Seus Dados</h2>
+
+            {!isAuthenticated ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '2.5rem 1.5rem',
+                background: '#fff',
+                borderRadius: '16px',
+                border: '1px solid #e5e7eb',
+              }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #0d1526, #1a2a52)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 1.25rem',
+                }}>
+                  <LogIn size={28} color="#d4af37" />
+                </div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0d1526', marginBottom: '0.5rem' }}>
+                  Faça login para continuar
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '1.5rem', maxWidth: '320px', margin: '0 auto 1.5rem' }}>
+                  Para garantir a segurança do seu agendamento, precisamos que você entre ou crie uma conta.
+                </p>
+                <button
+                  className="btn-submit"
+                  onClick={() => setShowAuthModal(true)}
+                  style={{ maxWidth: '280px', margin: '0 auto' }}
+                >
+                  <LogIn size={18} style={{ marginRight: '8px' }} />
+                  Entrar ou Cadastrar
+                </button>
+              </div>
+            ) : (
+            <>
             <div className="details-form">
               <div className="input-group">
                 <label className="input-label">Seu Nome</label>
@@ -754,10 +794,22 @@ function App() {
             >
               {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Finalizar Agendamento'}
             </button>
+            </>
+            )}
           </section>
         )}
 
       </div>
+
+      {showAuthModal && (
+        <LoginModal
+          onSuccess={() => {
+            setShowAuthModal(false);
+            toast.success('Autenticado com sucesso!');
+          }}
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
     </div>
   );
 }

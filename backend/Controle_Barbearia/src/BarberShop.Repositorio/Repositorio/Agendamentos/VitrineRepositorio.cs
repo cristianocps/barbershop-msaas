@@ -225,7 +225,7 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
 
                 var _queryOcupados = @"
                     SELECT 
-                        TO_CHAR(a.dtagendamento, 'HH24:MI') AS HoraStr,
+                        TO_CHAR(a.dtagendamento AT TIME ZONE 'America/Sao_Paulo', 'HH24:MI') AS HoraStr,
                         COALESCE(
                             NULLIF(a.duracao_minutos, 0),
                             (
@@ -238,8 +238,8 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                         ) AS DuracaoMinutos
                     FROM public.agendamentos a
                     WHERE a.idprofissional = @IdProfissional
-                      AND TO_CHAR(a.dtagendamento, 'YYYY-MM-DD') = @DataStr
-                      AND a.status != 3;";
+                      AND TO_CHAR(a.dtagendamento AT TIME ZONE 'America/Sao_Paulo', 'YYYY-MM-DD') = @DataStr
+                      AND a.status != 3";;
 
                 var _ocupadosDB = await _dbConnectionFactory.QueryAsync<dynamic>(
                     _queryOcupados, new { IdProfissional = idProfissional, DataStr = dataStr });

@@ -25,6 +25,9 @@ export const AgendamentosService = {
     getPendentesHoje: () => {
         return api.get(`${BASE_PATH}/get-pendentes-hoje`);
     },
+    getProximos: () => {
+        return api.get(`${BASE_PATH}/proximos`);
+    },
     carregarCalendario: (inicio, fim) => {
         const toParam = (d) => {
             if (!(d instanceof Date)) return d;
