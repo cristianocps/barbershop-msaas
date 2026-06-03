@@ -44,18 +44,33 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const toast = useToast();
 
-    const _fetchEmpresaAtual = async () => {
+    const _fetchEmpresaAtual = async (preferId = null) => {
         try {
-            const res = await EmpresasService.carregarCombo('', 1);
-            const lista = res?.Data ?? res?.data ?? [];
-            const primeira = Array.isArray(lista) ? lista[0] : null;
-            if (primeira?.id) {
-                const detRes = await EmpresasService.editar(primeira.id);
+            let idEmpresa = preferId;
+            // Se não tem ID preferido, tenta obter do perfil do usuário
+            if (!idEmpresa) {
+                try {
+                    const meRes = await AuthService.me();
+                    const meData = meRes?.data ?? meRes;
+                    if (meData?.idEmpresa && meData.idEmpresa > 0) {
+                        idEmpresa = meData.idEmpresa;
+                    }
+                } catch { /* ignore */ }
+            }
+            // Fallback: primeira empresa do combo
+            if (!idEmpresa) {
+                const res = await EmpresasService.carregarCombo('', 1);
+                const lista = res?.Data ?? res?.data ?? [];
+                const primeira = Array.isArray(lista) ? lista[0] : null;
+                idEmpresa = primeira?.id ?? primeira?.ID ?? primeira?.Id;
+            }
+            if (idEmpresa) {
+                const detRes = await EmpresasService.editar(idEmpresa);
                 const dados = detRes?.Data ?? detRes?.data ?? detRes;
                 if (dados) {
                     setEmpresa({
-                        id: dados.id ?? dados.ID ?? primeira.id,
-                        descricao: dados.descricao ?? dados.Descricao ?? primeira.text ?? 'Barbearia',
+                        id: dados.id ?? dados.ID ?? idEmpresa,
+                        descricao: dados.descricao ?? dados.Descricao ?? 'Barbearia',
                         logoData: dados.logoData ?? dados.LogoData ?? '',
                     });
                     localStorage.setItem('empresa_logo', dados.logoData ?? dados.LogoData ?? '');
@@ -160,7 +175,7 @@ export const AuthProvider = ({ children }) => {
         return () => { cancelled = true; };
     }, [token]);
 
-    const refreshEmpresa = () => _fetchEmpresaAtual();
+    const refreshEmpresa = (preferId) => _fetchEmpresaAtual(preferId);
 
     const refreshContaCliente = async () => {
         if (!user || !isClienteUser(user)) return;

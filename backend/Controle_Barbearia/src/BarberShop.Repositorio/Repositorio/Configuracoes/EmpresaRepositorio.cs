@@ -59,11 +59,12 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                             cidade = @Cidade,
                             telefone = @Telefone,
                             endereco = @Endereco,
-                            logo_data = @LogoData, -- Removido o ::text
+                            logo_data = @LogoData,
                             status = @Status,
                             slug = @Slug,
                             infinitepay_handle = @InfinitepayHandle,
-                            infinitepay_webhook_secret = COALESCE(@InfinitepayWebhookSecret, infinitepay_webhook_secret)
+                            infinitepay_webhook_secret = COALESCE(@InfinitepayWebhookSecret, infinitepay_webhook_secret),
+                            horarios_config = @HorariosConfig::jsonb
                         WHERE 
                             id = @ID
                             AND idusuario = {_identidade.IdUsuarioLogado}
@@ -74,10 +75,10 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                     _query = $@"
                         INSERT INTO public.empresas ( 
                             idusuario, descricao, dtcriacao, status, cidade, telefone, endereco, logo_data, slug,
-                            infinitepay_handle, infinitepay_webhook_secret
+                            infinitepay_handle, infinitepay_webhook_secret, horarios_config
                         ) VALUES (
                             {_identidade.IdUsuarioLogado}, @Descricao, @DtCriacao, 1, @Cidade, @Telefone, @Endereco, @LogoData, @Slug,
-                            @InfinitepayHandle, @InfinitepayWebhookSecret
+                            @InfinitepayHandle, @InfinitepayWebhookSecret, @HorariosConfig::jsonb
                         )
                         RETURNING id::bigint;";
                 }
@@ -100,20 +101,14 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                 }
 
                 // Se for um novo cadastro, vincula o usuário criador à nova empresa automaticamente
-                // ✅ Aplicado apenas se o usuário estiver na empresa 'Teste' (ID 1) e for do perfil 'Profissional'
+                // ✅ Aplicado apenas se o usuário estiver na empresa de demonstração (ID 1)
                 if (dados.ID == 0 && _result > 0 && (_identidade.IdUsuarioLogado ?? 0) > 0)
                 {
                     var _updateUserQuery = $@"
                         UPDATE public.usuarios 
                         SET idempresa = {_result} 
                         WHERE id = {_identidade.IdUsuarioLogado} 
-                          AND idempresa = 1 
-                          AND idclains IN (
-                              SELECT aur.""UserId"" 
-                              FROM ""AspNetUserRoles"" aur 
-                              JOIN ""AspNetRoles"" ar ON ar.""Id"" = aur.""RoleId"" 
-                              WHERE ar.""NormalizedName"" = 'PROFISSIONAL'
-                          )";
+                          AND idempresa = 1";
                     await _dbConnectionFactory.ExecuteAsync(_updateUserQuery, null).ConfigureAwait(false);
                 }
 
@@ -184,7 +179,8 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                         id AS ID, idusuario AS IdUsuario,
                         descricao AS Descricao, dtcriacao AS DtCriacao, status AS Status,
                         cidade AS Cidade, telefone AS Telefone, endereco AS Endereco, logo_data AS LogoData, slug AS Slug,
-                        infinitepay_handle AS InfinitepayHandle, infinitepay_webhook_secret AS InfinitepayWebhookSecret
+                        infinitepay_handle AS InfinitepayHandle, infinitepay_webhook_secret AS InfinitepayWebhookSecret,
+                        horarios_config AS HorariosConfig
                     FROM public.empresas
                     WHERE id = @IdItem
                       AND (idusuario = {_identidade.IdUsuarioLogado} OR id = {_identidade.IdEmpresaLogado})

@@ -73,7 +73,7 @@ namespace BarberShop.Areas.Empresas
 
                 var _result = await _empresaServicos.AlterarEmpresas(dados).ConfigureAwait(false);
 
-                return await ResponseJson(ResponseJsonTypes.Success);
+                return await ResponseJson(ResponseJsonTypes.Success, "", new { id = _result });
             }
             catch (TratamentoExcecao e) { return await ResponseJson(ResponseJsonTypes.Error, e.Message); }
             catch (Exception ex) { return await ResponseJson(ResponseJsonTypes.Error, ex.Message); }

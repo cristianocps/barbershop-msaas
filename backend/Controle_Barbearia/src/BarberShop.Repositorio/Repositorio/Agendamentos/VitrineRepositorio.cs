@@ -137,6 +137,40 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
             {
                 int diaSemana = (int)data.DayOfWeek;
                 
+                // Busca idempresa do profissional
+                var idEmpresa = await _dbConnectionFactory.QuerySingleOrDefaultAsync<long>(
+                    "SELECT idempresa FROM public.profissionais WHERE id = @IdProfissional LIMIT 1;",
+                    new { IdProfissional = idProfissional });
+
+                // Busca horários da empresa (novo) — usados como restrição de janela
+                List<dynamic> horariosEmpresa = new List<dynamic>();
+                if (idEmpresa > 0)
+                {
+                    var empresaCfg = await _dbConnectionFactory.QuerySingleOrDefaultAsync<string>(
+                        "SELECT horarios_config FROM public.empresas WHERE id = @IdEmpresa LIMIT 1;",
+                        new { IdEmpresa = idEmpresa });
+
+                    if (!string.IsNullOrWhiteSpace(empresaCfg))
+                    {
+                        try
+                        {
+                            using var doc = System.Text.Json.JsonDocument.Parse(empresaCfg);
+                            foreach (var el in doc.RootElement.EnumerateArray())
+                            {
+                                int ds = el.GetProperty("diaSemana").GetInt32();
+                                if (ds == diaSemana && el.TryGetProperty("ativo", out var ativoProp) && ativoProp.GetBoolean())
+                                {
+                                    string hi = el.GetProperty("horaInicio").GetString() ?? "08:00:00";
+                                    string hf = el.GetProperty("horaFim").GetString() ?? "18:00:00";
+                                    int dm = el.TryGetProperty("duracaoMinutos", out var dmProp) ? dmProp.GetInt32() : 30;
+                                    horariosEmpresa.Add(new { HoraInicio = TimeSpan.Parse(hi), HoraFim = TimeSpan.Parse(hf), DuracaoMinutos = dm });
+                                }
+                            }
+                        }
+                        catch { /* ignora JSON inválido */ }
+                    }
+                }
+                
                 var _queryHorarios = @"
                     SELECT hora_inicio AS HoraInicio, hora_fim AS HoraFim, duracao_minutos AS DuracaoMinutos
                     FROM public.profissionais_horarios
@@ -147,7 +181,44 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                 var horariosConfig = await _dbConnectionFactory.QueryAsync<dynamic>(
                     _queryHorarios, new { IdProfissional = idProfissional, DiaSemana = diaSemana });
 
+                // Se não há horário do profissional, retorna vazio
                 if (!horariosConfig.Any())
+                    return new List<string>();
+
+                // Se há horários da empresa, intersecta com os do profissional
+                var janelas = new List<(TimeSpan Inicio, TimeSpan Fim, int Duracao)>();
+                if (horariosEmpresa.Any())
+                {
+                    foreach (var ph in horariosConfig)
+                    {
+                        TimeSpan pInicio = ph.horainicio;
+                        TimeSpan pFim = ph.horafim;
+                        int pDur = ph.duracaominutos;
+                        if (pDur <= 0) pDur = 30;
+
+                        foreach (var eh in horariosEmpresa)
+                        {
+                            TimeSpan iInicio = pInicio > eh.HoraInicio ? pInicio : eh.HoraInicio;
+                            TimeSpan iFim = pFim < eh.HoraFim ? pFim : eh.HoraFim;
+                            if (iInicio < iFim)
+                            {
+                                int dur = eh.DuracaoMinutos > 0 ? eh.DuracaoMinutos : pDur;
+                                janelas.Add((iInicio, iFim, dur));
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var ph in horariosConfig)
+                    {
+                        int pDur = ph.duracaominutos;
+                        if (pDur <= 0) pDur = 30;
+                        janelas.Add((ph.horainicio, ph.horafim, pDur));
+                    }
+                }
+
+                if (!janelas.Any())
                     return new List<string>();
 
                 var dataStr = data.ToString("yyyy-MM-dd");
@@ -189,11 +260,11 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
 
                 var _livres = new List<string>();
 
-                foreach (var cfg in horariosConfig)
+                foreach (var cfg in janelas)
                 {
-                    TimeSpan inicio = cfg.horainicio;
-                    TimeSpan fim = cfg.horafim;
-                    int duracao = cfg.duracaominutos;
+                    TimeSpan inicio = cfg.Inicio;
+                    TimeSpan fim = cfg.Fim;
+                    int duracao = cfg.Duracao;
                     if (duracao <= 0) duracao = 30;
 
                     TimeSpan atual = inicio;
@@ -208,7 +279,7 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                         {
                             _livres.Add(atual.ToString(@"hh\:mm"));
                         }
-                        atual = slotFim; // Or atual.Add(TimeSpan.FromMinutes(duracao))
+                        atual = slotFim;
                     }
                 }
 
@@ -254,6 +325,7 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
         {
             try
             {
+                await ValidarConflitoHorarioAsync(dados).ConfigureAwait(false);
                 var _telefoneClean = "";
                 if (!string.IsNullOrWhiteSpace(dados.TelefoneCliente))
                     _telefoneClean = dados.TelefoneCliente.ApenasNumeros();
@@ -393,6 +465,47 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
         }
 
 
+
+        private async Task ValidarConflitoHorarioAsync(VitrineConfirmarDTO dados)
+        {
+            if (dados.IdProfissional <= 0 || dados.DtAgendamento == default)
+                return;
+
+            var dtUtc = AgendamentoDateTimeHelper.ToStorageUtc(dados.DtAgendamento);
+            int duracaoMinutos = 30;
+            var idsServicos = dados.Servicos?.Where(s => s.IdServico > 0).Select(s => s.IdServico).Distinct().ToList();
+            if (idsServicos != null && idsServicos.Any())
+            {
+                var sqlDuracoes = @"
+                    SELECT COALESCE(NULLIF(SUM(duracao_minutos), 0), 30)
+                    FROM public.servicos
+                    WHERE id = ANY(@Ids) AND idempresa = @IdEmpresa;";
+                var duracaoCalc = await _dbConnectionFactory.QuerySingleOrDefaultAsync<int>(sqlDuracoes, new { Ids = idsServicos, IdEmpresa = dados.IdEmpresa }).ConfigureAwait(false);
+                if (duracaoCalc > 0) duracaoMinutos = duracaoCalc;
+            }
+
+            var dtFimUtc = dtUtc.AddMinutes(duracaoMinutos);
+
+            var sqlConflito = @"
+                SELECT COUNT(1)
+                FROM public.agendamentos a
+                WHERE a.idprofissional = @IdProfissional
+                  AND a.idempresa = @IdEmpresa
+                  AND a.status != 3
+                  AND a.dtagendamento < @DtFim
+                  AND (a.dtagendamento + (COALESCE(a.duracao_minutos, 30) || ' minutes')::interval) > @DtInicio;";
+
+            var conflitos = await _dbConnectionFactory.QuerySingleOrDefaultAsync<int>(sqlConflito, new
+            {
+                IdProfissional = dados.IdProfissional,
+                IdEmpresa = dados.IdEmpresa,
+                DtInicio = dtUtc,
+                DtFim = dtFimUtc
+            }).ConfigureAwait(false);
+
+            if (conflitos > 0)
+                throw new TratamentoExcecao("Já existe um agendamento para este profissional no horário selecionado. Verifique os horários disponíveis.");
+        }
 
         public void Dispose()
         {

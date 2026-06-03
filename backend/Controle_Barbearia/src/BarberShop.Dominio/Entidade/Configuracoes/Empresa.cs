@@ -88,6 +88,9 @@ namespace BarberShop.Dominio.Entidade.Configuracoes
         [Column("onboarding_etapas", TypeName = "jsonb")]
         public string? OnboardingEtapas { get; set; }
 
+        [Column("horarios_config", TypeName = "jsonb")]
+        public string? HorariosConfig { get; set; }
+
         [NotMapped]
         [ScaffoldColumn(false)]
         public long RecordsTotal { get; set; } = default!;

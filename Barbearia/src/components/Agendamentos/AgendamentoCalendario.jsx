@@ -11,10 +11,12 @@ import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { AgendamentosService } from '../../services/Agendamentos/AgendamentosService';
 import { ProfissionaisService } from '../../services/Configuracoes/ProfissionaisService';
+import { EmpresasService } from '../../services/Configuracoes/EmpresasService';
+import { useAuth } from '../../contexts/AuthContext';
 
-const HORA_INICIO = 6;
-const HORA_FIM = 22;
-const SLOT_MINUTOS = 30;
+const HORA_INICIO_PADRAO = 6;
+const HORA_FIM_PADRAO = 22;
+const SLOT_MINUTOS_PADRAO = 30;
 /** Altura em px de cada slot de 30 min — define a escala temporal do calendário */
 const ALTURA_SLOT = 48;
 
@@ -52,20 +54,21 @@ function slotToDatetimeLocal(day, slot) {
     return `${format(d, 'yyyy-MM-dd')}T${format(d, 'HH:mm')}`;
 }
 
-function slotOverlapsApt(slot, apt) {
+function slotOverlapsApt(slot, apt, slotMinutos = 30) {
     const dt = toDate(pick(apt, 'dtAgendamento', 'DtAgendamento'));
     if (!dt) return false;
 
     const aptStart = dt.getHours() * 60 + dt.getMinutes();
-    const aptDur = pick(apt, 'duracaoMinutos', 'DuracaoMinutos') || SLOT_MINUTOS;
+    const aptDur = pick(apt, 'duracaoMinutos', 'DuracaoMinutos') || slotMinutos;
     const aptEnd = aptStart + aptDur;
     const slotStart = slot.hour * 60 + slot.minute;
-    const slotEnd = slotStart + SLOT_MINUTOS;
+    const slotEnd = slotStart + slotMinutos;
 
     return slotStart < aptEnd && slotEnd > aptStart;
 }
 
 export function AgendamentoCalendario({ onSelectAgendamento, onCreateAgendamento }) {
+    const { empresa } = useAuth();
     const [weekStart, setWeekStart] = useState(() =>
         startOfWeek(new Date(), { weekStartsOn: 1 })
     );
@@ -74,6 +77,38 @@ export function AgendamentoCalendario({ onSelectAgendamento, onCreateAgendamento
     const [agendamentos, setAgendamentos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [horariosEmpresa, setHorariosEmpresa] = useState([]);
+
+    const empresaId = empresa?.id ?? empresa?.ID ?? empresa?.Id ?? 0;
+
+    useEffect(() => {
+        if (!empresaId) return;
+        EmpresasService.editar(empresaId)
+            .then(res => {
+                const dados = res?.Data ?? res?.data ?? res;
+                const cfg = dados?.horariosConfig ?? dados?.HorariosConfig ?? null;
+                if (cfg) {
+                    try {
+                        const parsed = typeof cfg === 'string' ? JSON.parse(cfg) : cfg;
+                        if (Array.isArray(parsed)) setHorariosEmpresa(parsed);
+                    } catch { /* ignore */ }
+                }
+            })
+            .catch(() => {});
+    }, [empresaId]);
+
+    const configDoDia = useMemo(() => {
+        const diaSemana = selectedDay.getDay();
+        return horariosEmpresa.find(h => h.diaSemana === diaSemana && h.ativo);
+    }, [horariosEmpresa, selectedDay]);
+
+    const HORA_INICIO = configDoDia?.horaInicio
+        ? parseInt(configDoDia.horaInicio.split(':')[0], 10)
+        : HORA_INICIO_PADRAO;
+    const HORA_FIM = configDoDia?.horaFim
+        ? parseInt(configDoDia.horaFim.split(':')[0], 10)
+        : HORA_FIM_PADRAO;
+    const SLOT_MINUTOS = configDoDia?.duracaoMinutos || SLOT_MINUTOS_PADRAO;
 
     const weekDays = useMemo(
         () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
@@ -92,7 +127,7 @@ export function AgendamentoCalendario({ onSelectAgendamento, onCreateAgendamento
             }
         }
         return slots;
-    }, []);
+    }, [HORA_INICIO, HORA_FIM, SLOT_MINUTOS]);
 
     const totalHeight = timeSlots.length * ALTURA_SLOT;
 
@@ -296,7 +331,7 @@ export function AgendamentoCalendario({ onSelectAgendamento, onCreateAgendamento
                                     style={{ height: totalHeight }}
                                 >
                                     {timeSlots.map((slot) => {
-                                        const ocupado = apts.some((apt) => slotOverlapsApt(slot, apt));
+                                        const ocupado = apts.some((apt) => slotOverlapsApt(slot, apt, SLOT_MINUTOS));
                                         return (
                                             <button
                                                 key={`${profId}-${slot.label}`}

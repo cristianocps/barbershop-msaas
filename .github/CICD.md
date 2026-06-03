@@ -30,21 +30,31 @@ echo "TOKEN" | docker login ghcr.io -u SEU_USUARIO --password-stdin
 
 ## Deploy no servidor (manual / Portainer)
 
-1. Defina no `.env` ou no shell:
+Use `docker-compose-prd.yml` (Postgres + Redis + app via GHCR).
+
+1. Confirme que o workflow **Docker** rodou com sucesso após push em `main` (imagens `barbearia-backend` e `barbearia-frontend`).
+
+2. No Portainer ou no `.env` da stack, defina:
 
 ```bash
-export GHCR_OWNER=seu-usuario-github   # minúsculas, igual ao GitHub
-export GHCR_TAG=latest                  # ou SHA curto do commit
+GHCR_OWNER=cristianocps          # usuário GitHub em minúsculas
+GHCR_TAG=latest                  # ou SHA do commit (ex.: a1b2c3d)
 ```
 
-2. Atualize os containers:
+3. Se os pacotes forem **privados**, faça login no servidor antes do deploy:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.ghcr.yml pull backend frontend
-docker compose -f docker-compose.yml -f docker-compose.ghcr.yml up -d backend frontend
+echo "SEU_PAT" | docker login ghcr.io -u cristianocps --password-stdin
 ```
 
-Postgres e Redis continuam no `docker-compose.yml` base (build local não é usado para app).
+4. Suba a stack:
+
+```bash
+docker compose -f docker-compose-prd.yml pull
+docker compose -f docker-compose-prd.yml up -d
+```
+
+**Erro `manifest unknown`:** quase sempre é nome de imagem errado ou tag inexistente. O compose antigo usava `barbershop-msaas-*`; o CI publica `barbearia-backend` / `barbearia-frontend`.
 
 ## Login com Google
 

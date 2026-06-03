@@ -19,6 +19,11 @@ const css = `
   position: relative;
   overflow: hidden;
 }
+.page-hdr--sticky {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
 .page-hdr::after {
   content: '';
   position: absolute;
@@ -192,11 +197,11 @@ const css = `
 }
 `;
 
-export function PageHeader({ icon, title, subtitle, onNew, newLabel = 'Novo', headerTourId, newButtonTourId }) {
+export function PageHeader({ icon, title, subtitle, onNew, newLabel = 'Novo', headerTourId, newButtonTourId, sticky = false }) {
     return (
         <>
             <style>{css}</style>
-            <div className="page-hdr">
+            <div className={`page-hdr ${sticky ? 'page-hdr--sticky' : ''}`}>
                 <div className="page-hdr-info" {...(headerTourId ? { 'data-tour': headerTourId } : {})}>
                     <div className="page-hdr-icon">
                         {React.cloneElement(icon, { size: 20, color: '#fff' })}

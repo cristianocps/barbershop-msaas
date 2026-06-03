@@ -26,6 +26,7 @@ function mapEmpresaToForm(dados, fallbackId = 0) {
         logoData: dados.logoData ?? dados.LogoData ?? '',
         status: dados.status ?? dados.Status ?? 1,
         infinitepayHandle: dados.infinitepayHandle ?? dados.InfinitepayHandle ?? '',
+        horariosConfig: dados.horariosConfig ?? dados.HorariosConfig ?? null,
     };
 }
 
@@ -96,9 +97,12 @@ export function MinhaBarbearia() {
             );
             assertApiSuccess(res, 'Erro ao salvar.');
 
+            // Extrai o ID retornado pelo backend (criação ou atualização)
+            const returnedId = res?.Data?.id ?? res?.data?.id ?? res?.Data?.ID ?? res?.data?.ID ?? payloadId;
+
             toast.success(isDemo ? 'Barbearia criada com sucesso!' : 'Dados atualizados!');
             setFieldErrors({});
-            await refreshEmpresa();
+            await refreshEmpresa(returnedId || null);
             setReloadKey((k) => k + 1);
         } catch (err) {
             setForm(snapshot);

@@ -138,7 +138,7 @@ export function DataGrid({
             )}
 
             {/* DESKTOP TABLE */}
-            <div className="hidden md:block" style={{ backgroundColor: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-muted)', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
+            <div className="datagrid-desktop" style={{ backgroundColor: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-muted)', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
                 <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
                         <thead style={{ backgroundColor: 'var(--bg-dark)', borderBottom: '1px solid var(--border-muted)' }}>
@@ -199,17 +199,8 @@ export function DataGrid({
                 )}
             </div>
 
-            {/* MOBILE CARDS - Using generic css media query approach inline requires actual CSS classes for hidden/block. 
-                Assuming we use a global style or inline condition. Let's just use CSS `display: block` at small screens via index.css usually.
-                But we'll wrap it in a div that is only visible on mobile (using standard tailwind classes or custom).
-                I'll add a simple inline style fallback for now, but usually it matches `.md:hidden` from tailwind. */}
-            <div className="md:hidden" style={{ display: 'none' /* handled by CSS usually, but we need to inject the CSS */ }}>
-                <style>{`
-                    @media (max-width: 767px) {
-                        .md\\:hidden { display: block !important; }
-                        .hidden.md\\:block { display: none !important; }
-                    }
-                `}</style>
+            {/* MOBILE CARDS */}
+            <div className="datagrid-mobile">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {loading ? (
                         [...Array(4)].map((_, i) => <SkeletonCard key={i} />)

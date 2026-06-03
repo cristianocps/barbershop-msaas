@@ -1538,3 +1538,11 @@ p {
 .page-filters-field .fm-select {
   min-width: 160px;
 }
+
+/* DataGrid responsive fallback */
+.datagrid-desktop { display: block; }
+.datagrid-mobile  { display: none; }
+@media (max-width: 767px) {
+  .datagrid-desktop { display: none !important; }
+  .datagrid-mobile  { display: block !important; }
+}

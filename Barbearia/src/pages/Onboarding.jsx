@@ -38,9 +38,18 @@ export function Onboarding() {
         try {
             await OnboardingService.concluir();
             toast.success('Configuração inicial concluída!');
-            navigate('/');
+            navigate('/', { replace: true });
         } catch (err) {
             toast.error(err.message || 'Erro ao concluir.');
+        }
+    };
+
+    const handlePular = async () => {
+        try {
+            await OnboardingService.concluir();
+            navigate('/', { replace: true });
+        } catch (err) {
+            toast.error(err.message || 'Erro ao pular onboarding.');
         }
     };
 
@@ -84,13 +93,15 @@ export function Onboarding() {
                                 background: '#fff',
                                 borderRadius: 12,
                                 border: `1px solid ${etapa.concluida ? '#86efac' : '#e2e8f0'}`,
+                                flexWrap: 'wrap',
+                                minWidth: 0,
                             }}
                         >
                             {etapa.concluida
                                 ? <CheckCircle2 color="#22c55e" size={28} />
                                 : <Icon color="#d4af37" size={28} />}
-                            <div style={{ flex: 1 }}>
-                                <strong>{etapa.titulo}</strong>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <strong style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{etapa.titulo}</strong>
                                 {etapa.concluida && <span style={{ marginLeft: 8, color: '#22c55e', fontSize: '0.85rem' }}>Concluída</span>}
                             </div>
                             {etapa.rota && (
@@ -106,6 +117,7 @@ export function Onboarding() {
                                         background: '#f6b001',
                                         padding: '8px 14px',
                                         borderRadius: 8,
+                                        flexShrink: 0,
                                     }}
                                 >
                                     Configurar <ArrowRight size={14} />
@@ -137,7 +149,20 @@ export function Onboarding() {
             )}
 
             <p style={{ textAlign: 'center', marginTop: '1rem' }}>
-                <Link to="/" style={{ color: '#64748b', fontSize: '0.9rem' }}>Pular por agora</Link>
+                <button
+                    type="button"
+                    onClick={handlePular}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#64748b',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                    }}
+                >
+                    Pular por agora
+                </button>
             </p>
         </div>
     );

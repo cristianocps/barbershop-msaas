@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Npgsql;
 
 namespace BarberShop.Controllers
 {
@@ -160,12 +161,29 @@ namespace BarberShop.Controllers
             var roles = (await _userManager.GetRolesAsync(user).ConfigureAwait(false)).ToList();
             var isCliente = roles.Contains("Cliente", StringComparer.OrdinalIgnoreCase);
 
+            long idEmpresa = 0;
+            try
+            {
+                var connectionString = _configuration.GetConnectionString("DefaultConnection");
+                using var connection = new Npgsql.NpgsqlConnection(connectionString);
+                await connection.OpenAsync();
+                using var command = new Npgsql.NpgsqlCommand(
+                    "SELECT COALESCE(idempresa, 0) FROM public.usuarios WHERE LOWER(TRIM(email)) = LOWER(TRIM(@Email)) LIMIT 1",
+                    connection);
+                command.Parameters.AddWithValue("Email", email);
+                var result = await command.ExecuteScalarAsync();
+                if (result != null && result != DBNull.Value)
+                    long.TryParse(result.ToString(), out idEmpresa);
+            }
+            catch { /* ignore */ }
+
             return Ok(new
             {
                 email,
                 name = user.UserName,
                 roles,
-                accountType = isCliente ? "cliente" : "barbearia"
+                accountType = isCliente ? "cliente" : "barbearia",
+                idEmpresa
             });
         }
 

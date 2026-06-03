@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { FormField, FormRow } from '../UI/FormModal';
 import { ImagePlus, X } from 'lucide-react';
 import { getSlugPrefixLabel } from '../../utils/publicSiteUrl';
+import { EmpresaHorariosConfig } from './EmpresaHorariosConfig';
 
 const MAX_SIZE_MB = 2;
 
@@ -259,6 +260,11 @@ export function EmpresaForm({ form, onChange, variant = 'full', fieldErrors = {}
                     placeholder="$sua_infinite_tag"
                 />
             </FormField>
+
+            <EmpresaHorariosConfig
+                value={form.horariosConfig}
+                onChange={(val) => set('horariosConfig', val)}
+            />
         </>
     );
 }
@@ -276,4 +282,5 @@ export const EmpresaFormDefault = () => ({
     logoData: '',
     status: 1,
     infinitepayHandle: '',
+    horariosConfig: null,
 });

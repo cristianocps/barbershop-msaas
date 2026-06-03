@@ -87,6 +87,8 @@ export function buildEmpresaApiPayload(form) {
         Status: form.status ?? 1,
         infinitepayHandle: form.infinitepayHandle || '',
         InfinitepayHandle: form.infinitepayHandle || '',
+        horariosConfig: form.horariosConfig ? JSON.stringify(form.horariosConfig) : null,
+        HorariosConfig: form.horariosConfig ? JSON.stringify(form.horariosConfig) : null,
         dtCriacao: dt,
         DtCriacao: dt,
     };

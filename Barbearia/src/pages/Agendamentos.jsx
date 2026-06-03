@@ -150,7 +150,7 @@ export function Agendamentos() {
                     status:       1,
                 }));
 
-            await AgendamentosService.alterar({
+            const res = await AgendamentosService.alterar({
                 id:             form.id || 0,
                 idCliente:      parseInt(form.idCliente, 10) || 0,
                 descricao:      form.descricao,
@@ -162,6 +162,9 @@ export function Agendamentos() {
                 observacao:     form.observacao    || '',
                 status:         form.status        ?? 1,
             });
+            if (res?.JsonTypes === 'error' || res?.jsonTypes === 'error') {
+                throw new Error(res?.Mensagem || res?.mensagem || 'Erro ao salvar agendamento');
+            }
             toast.success(isEditing ? 'Agendamento atualizado com sucesso!' : 'Agendamento criado com sucesso!');
             setModalOpen(false);
             loadData();
@@ -299,20 +302,20 @@ export function Agendamentos() {
         const s = getStatusInfo(row);
         const hasPix = row?.comprovantePix || row?.ComprovantePix;
         return (
-            <div style={{ background: '#fff', borderRadius: '14px', padding: '14px', border: '1px solid #e5e7eb', marginBottom: '10px', boxShadow: '0 2px 6px rgba(0,0,0,0.04)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+            <div style={{ background: '#fff', borderRadius: '14px', padding: '14px', border: '1px solid #e5e7eb', marginBottom: '10px', boxShadow: '0 2px 6px rgba(0,0,0,0.04)', maxWidth: '100%', boxSizing: 'border-box' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', minWidth: 0 }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg,#1a1a2e,#0f3460)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <CalendarDays size={17} color="#f6b001" />
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                         <strong style={{ display: 'block', fontSize: '0.9rem', color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getDescricao(row)}</strong>
                         <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>{getTelefone(row)}</span>
                     </div>
                     <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700, background: s.bg, color: s.color, flexShrink: 0 }}>{s.label}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '8px 0', borderTop: '1px solid #f3f4f6', borderBottom: '1px solid #f3f4f6', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '0.82rem', color: '#6b7280' }}>📅 {getData(row)}</span>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#16a34a' }}>💰 {getValorTotal(row)}</span>
+                    <span style={{ fontSize: '0.82rem', color: '#6b7280', wordBreak: 'break-word' }}>📅 {getData(row)}</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#16a34a', wordBreak: 'break-word' }}>💰 {getValorTotal(row)}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
                         {hasPix ? (
                             <span style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -325,15 +328,17 @@ export function Agendamentos() {
                         )}
                     </div>
                 </div>
-                <AgendamentoAcoes
-                    row={row}
-                    onEdit={openEdit}
-                    onConfirmar={handleConfirmar}
-                    onConcluir={openConcluir}
-                    onCancelar={openCancelar}
-                    onVerPagamento={handleVerPagamento}
-                    onVerMotivo={handleVerMotivo}
-                />
+                <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                    <AgendamentoAcoes
+                        row={row}
+                        onEdit={openEdit}
+                        onConfirmar={handleConfirmar}
+                        onConcluir={openConcluir}
+                        onCancelar={openCancelar}
+                        onVerPagamento={handleVerPagamento}
+                        onVerMotivo={handleVerMotivo}
+                    />
+                </div>
             </div>
         );
     };
@@ -346,6 +351,7 @@ export function Agendamentos() {
                 subtitle="Gerencie todos os agendamentos"
                 newLabel="Novo Agendamento"
                 onNew={openNew}
+                sticky
             />
             <div className="view-toggle-wrap">
                 <button

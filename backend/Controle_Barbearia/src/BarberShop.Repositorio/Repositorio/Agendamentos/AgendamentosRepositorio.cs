@@ -36,6 +36,7 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
             try
             {
                 dados.DtAgendamento = AgendamentoDateTimeHelper.ToStorageUtc(dados.DtAgendamento);
+                await ValidarConflitoHorarioAsync(dados).ConfigureAwait(false);
                 dados.IdCliente = await ResolverIdClienteAsync(dados).ConfigureAwait(false);
 
                 var _queryPai = "";
@@ -116,6 +117,51 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
             {
                 throw new TratamentoExcecao($"Erro ao salvar o agendamento: {ex.Message.Traduzir()}");
             }
+        }
+
+        private async Task ValidarConflitoHorarioAsync(Agendamento dados)
+        {
+            if (dados.IdProfissional <= 0 || dados.DtAgendamento == default)
+                return;
+
+            var dtUtc = dados.DtAgendamento;
+            int duracaoMinutos = 30;
+            if (dados.Itens != null && dados.Itens.Any())
+            {
+                var idsServicos = dados.Itens.Where(i => i.IdServico > 0).Select(i => i.IdServico).Distinct().ToList();
+                if (idsServicos.Any())
+                {
+                    var sqlDuracoes = $@"
+                        SELECT COALESCE(NULLIF(SUM(duracao_minutos), 0), 30)
+                        FROM public.servicos
+                        WHERE id = ANY(@Ids) AND idempresa = {_identidade.IdEmpresaLogado};";
+                    var duracaoCalc = await _dbConnectionFactory.QuerySingleOrDefaultAsync<int>(sqlDuracoes, new { Ids = idsServicos }).ConfigureAwait(false);
+                    if (duracaoCalc > 0) duracaoMinutos = duracaoCalc;
+                }
+            }
+
+            var dtFimUtc = dtUtc.AddMinutes(duracaoMinutos);
+
+            var sqlConflito = $@"
+                SELECT COUNT(1)
+                FROM public.agendamentos a
+                WHERE a.idprofissional = @IdProfissional
+                  AND a.idempresa = {_identidade.IdEmpresaLogado}
+                  AND a.status != 3
+                  AND (@IdAgendamento = 0 OR a.id != @IdAgendamento)
+                  AND a.dtagendamento < @DtFim
+                  AND (a.dtagendamento + (COALESCE(a.duracao_minutos, 30) || ' minutes')::interval) > @DtInicio;";
+
+            var conflitos = await _dbConnectionFactory.QuerySingleOrDefaultAsync<int>(sqlConflito, new
+            {
+                IdProfissional = dados.IdProfissional,
+                IdAgendamento = dados.ID,
+                DtInicio = dtUtc,
+                DtFim = dtFimUtc
+            }).ConfigureAwait(false);
+
+            if (conflitos > 0)
+                throw new TratamentoExcecao("Já existe um agendamento para este profissional no horário selecionado. Verifique os horários disponíveis.");
         }
 
         private async Task<long> ResolverIdClienteAsync(Agendamento dados)
