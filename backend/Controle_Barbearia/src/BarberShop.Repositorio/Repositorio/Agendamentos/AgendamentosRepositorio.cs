@@ -422,6 +422,7 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
             try
             {
                 var dtLimite = DateTime.Now.AddHours(-24);
+                var dtHoje = DateTime.Now.Date;
 
                 var query = $@"
                     SELECT 
@@ -444,10 +445,11 @@ namespace BarberShop.Repositorio.Repositorio.Agendamentos
                     WHERE a.idempresa = {_identidade.IdEmpresaLogado}
                       AND a.status = 0
                       AND a.dtcriacao >= @DtStart
+                      AND a.dtagendamento >= @DtHoje
                     ORDER BY a.dtagendamento ASC;
                 ";
 
-                var result = await _dbConnectionFactory.QueryAsync<AgendamentoPendenteDTO>(query, new { DtStart = dtLimite });
+                var result = await _dbConnectionFactory.QueryAsync<AgendamentoPendenteDTO>(query, new { DtStart = dtLimite, DtHoje = dtHoje });
                 return result;
             }
             catch (Exception ex)

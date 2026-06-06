@@ -10,7 +10,6 @@ const navGroups = [
         label: 'Principal',
         items: [
             { path: '/', icon: <LayoutDashboard size={18} />, label: 'Dashboard', exact: true, minPolicy: 'consulta' },
-            { path: '/onboarding', icon: <Settings size={18} />, label: 'Configurar barbearia', minPolicy: 'consulta' },
             { path: '/agendamentos', icon: <CalendarDays size={18} />, label: 'Agendamentos', minPolicy: 'consulta' },
             { path: '/financeiro', icon: <DollarSign size={18} />, label: 'Financeiro', minPolicy: 'gerente' },
         ]
@@ -48,7 +47,6 @@ const platformNavGroups = [
 
 const essentialWhenBlocked = [
     { path: '/', icon: <LayoutDashboard size={18} />, label: 'Dashboard', exact: true },
-    { path: '/onboarding', icon: <Settings size={18} />, label: 'Configurar barbearia' },
     { path: '/minha-barbearia', icon: <Building2 size={18} />, label: 'Minha barbearia' },
     { path: '/assinatura', icon: <DollarSign size={18} />, label: 'Assinatura / Pagamento' },
 ];

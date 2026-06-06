@@ -15,23 +15,22 @@ namespace BarberShop.Aplicacao.Entidades.Configuracoes
             _identidade = identidade;
         }
 
+        private long EmpresaIdOuDemo => _identidade.IdEmpresaLogado is > 0 ? _identidade.IdEmpresaLogado.Value : 1;
+
         public Task<OnboardingStatusDto> ObterStatusAsync()
         {
-            var idEmpresa = _identidade.IdEmpresaLogado ?? 1;
             var idUsuario = _identidade.IdUsuarioLogado ?? 0;
-            return _repo.ObterStatusAsync(idEmpresa, idUsuario);
+            return _repo.ObterStatusAsync(EmpresaIdOuDemo, idUsuario);
         }
 
         public Task MarcarCompletoAsync()
         {
-            var idEmpresa = _identidade.IdEmpresaLogado ?? 1;
-            return _repo.MarcarCompletoAsync(idEmpresa);
+            return _repo.MarcarCompletoAsync(EmpresaIdOuDemo);
         }
 
         public Task SalvarEtapasTourAsync(string json)
         {
-            var idEmpresa = _identidade.IdEmpresaLogado ?? 1;
-            return _repo.AtualizarEtapasJsonAsync(idEmpresa, json);
+            return _repo.AtualizarEtapasJsonAsync(EmpresaIdOuDemo, json);
         }
     }
 }

@@ -1,24 +1,22 @@
 import React from 'react';
-import { Bell, X, Eye, CalendarDays, User, Clock } from 'lucide-react';
+import { Bell, X, Eye, CalendarDays, Clock } from 'lucide-react';
 import { useAgendamentoAlert } from '../../hooks/useAgendamentoAlert';
 import { useNavigate } from 'react-router-dom';
 
-function SingleAlert({ ag, removeAlert, navigate }) {
-    const isProximo = ag.tipoAlerta === 'proximo';
+function GroupAlert({ tipo, count, removeGroup, navigate }) {
+    const isProximo = tipo === 'proximo';
 
     const handleAction = () => {
-        removeAlert(ag.id || ag.Id || ag.ID);
+        removeGroup(tipo);
         navigate('/agendamentos');
     };
-
-    const dataHora = (ag?.dtAgendamento || ag?.DtAgendamento) 
-        ? new Date(ag?.dtAgendamento || ag?.DtAgendamento).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
-        : 'Horário não informado';
 
     const borderColor = isProximo ? '#ef4444' : '#f6b001';
     const badgeColor = isProximo ? '#fee2e2' : '#fef3c7';
     const badgeText = isProximo ? '#dc2626' : '#f59e0b';
-    const labelText = isProximo ? 'Em breve!' : 'Novo Agendamento!';
+    const labelText = isProximo
+        ? `Agendamento${count > 1 ? 's' : ''} em breve!`
+        : `Novo${count > 1 ? 's' : ''} Agendamento${count > 1 ? 's' : ''}!`;
 
     return (
         <div style={{
@@ -35,8 +33,8 @@ function SingleAlert({ ag, removeAlert, navigate }) {
             position: 'relative'
         }}>
             {/* Botão Fechar */}
-            <button 
-                onClick={() => removeAlert(ag.id || ag.Id || ag.ID)}
+            <button
+                onClick={() => removeGroup(tipo)}
                 style={{
                     position: 'absolute', top: '15px', right: '15px',
                     border: 'none', background: 'none', cursor: 'pointer',
@@ -69,37 +67,24 @@ function SingleAlert({ ag, removeAlert, navigate }) {
                 )}
             </div>
 
-            {/* Nome do Cliente */}
+            {/* Conteúdo Agrupado */}
             <div style={{ fontWeight: 800, fontSize: '1.2rem', color: '#1e293b', marginBottom: '10px' }}>
-                {ag?.NomeCliente || ag?.nomeCliente || ag?.Descricao || ag?.descricao || 'Cliente'}
+                {isProximo
+                    ? `${count} agendamento${count > 1 ? 's' : ''} nas próximas 2h`
+                    : `${count} agendamento${count > 1 ? 's pendentes' : ' pendente'}`
+                }
             </div>
-            
-            {/* Detalhes do Serviço e Profissional */}
-            <div style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '15px', lineHeight: '1.5' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                        <span style={{ color: isProximo ? '#ef4444' : '#f6b001', fontWeight: 700 }}>Serviço:</span>
-                        <span style={{ color: '#1e293b', fontWeight: 600 }}>{ag?.Servico || ag?.servico || 'Não informado'}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <User size={14} color="#94a3b8" />
-                        <span style={{ fontSize: '0.85rem' }}>Profissional: <strong>{ag?.NomeProfissional || ag?.nomeProfissional || 'A definir'}</strong></span>
-                    </div>
-                </div>
 
-                <div style={{ 
-                    display: 'flex', alignItems: 'center', gap: '6px', 
-                    marginTop: '10px', fontSize: '0.85rem', color: '#64748b',
-                    background: '#f8fafc', padding: '6px 10px', borderRadius: '8px',
-                    width: 'fit-content'
-                }}>
-                    <CalendarDays size={14} /> {dataHora}
-                </div>
+            <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '15px' }}>
+                <CalendarDays size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px' }} />
+                {isProximo
+                    ? 'Verifique os horários que estão próximos.'
+                    : 'Aguardando confirmação no painel.'}
             </div>
 
             {/* Ação */}
             <div style={{ display: 'flex', gap: '10px' }}>
-                <button 
+                <button
                     onClick={handleAction}
                     style={{
                         flex: 1,
@@ -127,10 +112,13 @@ function SingleAlert({ ag, removeAlert, navigate }) {
 }
 
 export function AgendamentoAlert() {
-    const { newAgendamentos, removeAlert } = useAgendamentoAlert();
+    const { pendentes, proximos, removeGroup } = useAgendamentoAlert();
     const navigate = useNavigate();
 
-    if (newAgendamentos.length === 0) return null;
+    const hasPendentes = pendentes.length > 0;
+    const hasProximos = proximos.length > 0;
+
+    if (!hasPendentes && !hasProximos) return null;
 
     return (
         <div style={{
@@ -146,20 +134,26 @@ export function AgendamentoAlert() {
             width: 'calc(100% - 40px)',
             pointerEvents: 'none'
         }}>
-            {newAgendamentos.filter(a => a !== null && a !== undefined).map((ag) => (
-                <SingleAlert 
-                    key={`${ag.tipoAlerta || 'alert'}-${ag.id || ag.Id || ag.ID || Math.random()}`} 
-                    ag={ag} 
-                    removeAlert={removeAlert} 
-                    navigate={navigate} 
+            {hasPendentes && (
+                <GroupAlert
+                    key="grupo-pendentes"
+                    tipo="pendente"
+                    count={pendentes.length}
+                    removeGroup={removeGroup}
+                    navigate={navigate}
                 />
-            ))}
+            )}
+            {hasProximos && (
+                <GroupAlert
+                    key="grupo-proximos"
+                    tipo="proximo"
+                    count={proximos.length}
+                    removeGroup={removeGroup}
+                    navigate={navigate}
+                />
+            )}
 
             <style>{`
-                @keyframes slideDown {
-                    from { transform: translate(-50%, -50px); opacity: 0; }
-                    to { transform: translate(-50%, 0); opacity: 1; }
-                }
                 @keyframes slideDown {
                     0% { transform: translateY(-30px) scale(0.9); opacity: 0; }
                     100% { transform: translateY(0) scale(1); opacity: 1; }

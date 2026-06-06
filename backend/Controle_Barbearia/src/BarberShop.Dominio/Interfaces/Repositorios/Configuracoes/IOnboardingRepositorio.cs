@@ -14,6 +14,7 @@ namespace BarberShop.Dominio.Interfaces.Repositorios.Configuracoes
         public int Percentual { get; set; }
         public List<OnboardingEtapaStatus> Etapas { get; set; } = [];
         public long IdEmpresa { get; set; }
+        public Dictionary<string, bool>? EtapasTour { get; set; }
     }
 
     public interface IOnboardingRepositorio

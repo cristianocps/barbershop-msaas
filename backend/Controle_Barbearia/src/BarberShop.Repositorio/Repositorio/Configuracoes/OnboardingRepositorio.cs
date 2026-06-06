@@ -46,6 +46,17 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                 "SELECT CASE WHEN onboarding_completo THEN 1 ELSE 0 END FROM public.empresas WHERE id = @IdEmpresa",
                 idEmpresa).ConfigureAwait(false);
 
+            var etapasTourJson = await _db.QuerySingleOrDefaultAsync<string?>(
+                "SELECT onboarding_etapas::text FROM public.empresas WHERE id = @IdEmpresa",
+                new { IdEmpresa = idEmpresa }).ConfigureAwait(false);
+
+            Dictionary<string, bool>? etapasTour = null;
+            if (!string.IsNullOrWhiteSpace(etapasTourJson))
+            {
+                try { etapasTour = JsonSerializer.Deserialize<Dictionary<string, bool>>(etapasTourJson); }
+                catch { /* ignora JSON inválido */ }
+            }
+
             var etapas = new List<OnboardingEtapaStatus>
             {
                 new() { Key = "empresa", Titulo = "Cadastrar minha barbearia", Concluida = empresaReal, Rota = "/minha-barbearia" },
@@ -54,18 +65,22 @@ namespace BarberShop.Repositorio.Repositorio.Configuracoes
                 new() { Key = "pagamentos", Titulo = "Meios de pagamento", Concluida = (pix > 0 || infinite > 0) && empresaReal, Rota = "/configuracoes/dados-bancarios" },
             };
 
+            var jaCompleto = onboardingCompleto.Equals(1);
             var concluidas = etapas.Count(e => e.Concluida);
-            var percentual = etapas.Count == 0 ? 0 : (int)Math.Round(100.0 * concluidas / etapas.Count);
+            var percentual = jaCompleto
+                ? 100
+                : etapas.Count == 0 ? 0 : (int)Math.Round(100.0 * concluidas / etapas.Count);
 
-            if (!onboardingCompleto.Equals(1) && concluidas == etapas.Count && empresaReal)
+            if (!jaCompleto && concluidas == etapas.Count && empresaReal)
                 await MarcarCompletoAsync(idEmpresa).ConfigureAwait(false);
 
             return new OnboardingStatusDto
             {
                 IdEmpresa = idEmpresa,
-                OnboardingCompleto = onboardingCompleto.Equals(1) || (concluidas == etapas.Count && empresaReal),
+                OnboardingCompleto = jaCompleto || (concluidas == etapas.Count && empresaReal),
                 Percentual = percentual,
-                Etapas = etapas
+                Etapas = etapas,
+                EtapasTour = etapasTour
             };
         }
 

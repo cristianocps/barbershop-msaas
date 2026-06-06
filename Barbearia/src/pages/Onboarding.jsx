@@ -14,6 +14,7 @@ const ICONS = {
 export function Onboarding() {
     const [status, setStatus] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState(false);
     const navigate = useNavigate();
     const toast = useToast();
 
@@ -35,21 +36,27 @@ export function Onboarding() {
     useEffect(() => { load(); }, []);
 
     const handleConcluir = async () => {
+        if (actionLoading) return;
+        setActionLoading(true);
         try {
             await OnboardingService.concluir();
             toast.success('Configuração inicial concluída!');
             navigate('/', { replace: true });
         } catch (err) {
             toast.error(err.message || 'Erro ao concluir.');
+            setActionLoading(false);
         }
     };
 
     const handlePular = async () => {
+        if (actionLoading) return;
+        setActionLoading(true);
         try {
             await OnboardingService.concluir();
             navigate('/', { replace: true });
         } catch (err) {
             toast.error(err.message || 'Erro ao pular onboarding.');
+            setActionLoading(false);
         }
     };
 
@@ -132,6 +139,7 @@ export function Onboarding() {
                 <button
                     type="button"
                     onClick={handleConcluir}
+                    disabled={actionLoading}
                     style={{
                         marginTop: '2rem',
                         width: '100%',
@@ -141,10 +149,11 @@ export function Onboarding() {
                         border: 'none',
                         borderRadius: 10,
                         fontWeight: 700,
-                        cursor: 'pointer',
+                        cursor: actionLoading ? 'wait' : 'pointer',
+                        opacity: actionLoading ? 0.6 : 1,
                     }}
                 >
-                    Ir para o painel
+                    {actionLoading ? 'Aguarde...' : 'Ir para o painel'}
                 </button>
             )}
 
@@ -152,16 +161,18 @@ export function Onboarding() {
                 <button
                     type="button"
                     onClick={handlePular}
+                    disabled={actionLoading}
                     style={{
                         background: 'none',
                         border: 'none',
                         color: '#64748b',
                         fontSize: '0.9rem',
-                        cursor: 'pointer',
+                        cursor: actionLoading ? 'wait' : 'pointer',
                         textDecoration: 'underline',
+                        opacity: actionLoading ? 0.6 : 1,
                     }}
                 >
-                    Pular por agora
+                    {actionLoading ? 'Pulando...' : 'Pular por agora'}
                 </button>
             </p>
         </div>

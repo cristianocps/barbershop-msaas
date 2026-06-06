@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { driver } from 'driver.js';
 import 'driver.js/dist/driver.css';
-import { useAuth } from '../contexts/AuthContext';
+import { OnboardingService } from '../services/Configuracoes/OnboardingService';
 
 function waitForSelectors(selectors, timeoutMs = 4000) {
     const list = selectors.filter(Boolean);
@@ -22,23 +22,35 @@ function waitForSelectors(selectors, timeoutMs = 4000) {
 }
 
 export function useOnboardingTour() {
-    const { empresa } = useAuth();
+    const [tourData, setTourData] = useState(null);
+    const loaded = useRef(false);
 
-    const tourKey = useCallback((etapa) => {
-        const empId = empresa?.id ?? 'demo';
-        return `onboarding-tour-${etapa}-${empId}`;
-    }, [empresa?.id]);
+    useEffect(() => {
+        if (loaded.current) return;
+        loaded.current = true;
+
+        OnboardingService.obterStatus()
+            .then((res) => {
+                const status = res?.data ?? res?.Data ?? {};
+                setTourData(status.etapasTour ?? {});
+            })
+            .catch(() => setTourData({}));
+    }, []);
 
     const jaViuTour = useCallback((etapa) => {
-        return localStorage.getItem(tourKey(etapa)) === '1';
-    }, [tourKey]);
+        return tourData?.[etapa] === true;
+    }, [tourData]);
 
     const marcarTourVisto = useCallback((etapa) => {
-        localStorage.setItem(tourKey(etapa), '1');
-    }, [tourKey]);
+        setTourData((prev) => {
+            const updated = { ...prev, [etapa]: true };
+            OnboardingService.salvarEtapasTour(JSON.stringify(updated)).catch(() => {});
+            return updated;
+        });
+    }, []);
 
     const iniciarTour = useCallback((etapa, steps) => {
-        if (jaViuTour(etapa) || !steps?.length) return;
+        if (tourData === null || jaViuTour(etapa) || !steps?.length) return;
 
         const selectors = steps.map((s) => s.element).filter(Boolean);
 
@@ -46,7 +58,7 @@ export function useOnboardingTour() {
             await waitForSelectors(selectors);
             const d = driver({
                 showProgress: true,
-                nextBtnText: 'Próximo',
+                nextBtnText: 'Pr\u00f3ximo',
                 prevBtnText: 'Voltar',
                 doneBtnText: 'Concluir',
                 steps,
@@ -57,7 +69,7 @@ export function useOnboardingTour() {
 
         const t = window.setTimeout(() => { run(); }, 450);
         return () => window.clearTimeout(t);
-    }, [jaViuTour, marcarTourVisto]);
+    }, [tourData, jaViuTour, marcarTourVisto]);
 
-    return { iniciarTour, jaViuTour, marcarTourVisto, tourKey };
+    return { iniciarTour, jaViuTour, marcarTourVisto };
 }
