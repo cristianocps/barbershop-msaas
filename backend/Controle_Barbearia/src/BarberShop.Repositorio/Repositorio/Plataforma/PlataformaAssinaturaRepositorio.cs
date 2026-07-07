@@ -271,6 +271,9 @@ namespace BarberShop.Repositorio.Repositorio.Plataforma
                 if (dados.Status == null || dados.Status == StatusAssinaturaPlataforma.Active)
                 {
                     sets.Add("periodo_inicio = COALESCE(periodo_inicio, NOW())");
+                }
+                if (dados.Status == null)
+                {
                     sets.Add("status = @ActiveStatus");
                     param["ActiveStatus"] = StatusAssinaturaPlataforma.Active;
                 }
