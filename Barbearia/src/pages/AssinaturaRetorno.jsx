@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
+import { trackPixel } from '../utils/metaPixel';
 
 export function AssinaturaRetorno() {
     const [params] = useSearchParams();
@@ -8,6 +9,7 @@ export function AssinaturaRetorno() {
 
     useEffect(() => {
         document.title = 'Pagamento — BarberShop';
+        trackPixel('Subscribe', { currency: 'BRL' });
     }, []);
 
     return (

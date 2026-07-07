@@ -4,6 +4,7 @@ import { PageHeader } from '../components/UI/PageHeader';
 import { useAssinatura } from '../contexts/AssinaturaContext';
 import { useToast } from '../contexts/ToastContext';
 import { isAssinaturaBloqueioError } from '../utils/assinaturaBloqueio';
+import { trackPixel } from '../utils/metaPixel';
 
 function formatMoney(centavos) {
     const n = (Number(centavos) || 0) / 100;
@@ -33,6 +34,10 @@ export function Assinatura() {
             if (!url) throw new Error('Link não retornado.');
             setLinkUrl(url);
             window.open(url, '_blank', 'noopener,noreferrer');
+            trackPixel('InitiateCheckout', {
+                value: (Number(assinatura?.valorMensalCentavos) || 0) / 100,
+                currency: 'BRL',
+            });
             toast.success('Link de pagamento gerado. Conclua o pagamento na Infinite Pay.');
         } catch (err) {
             if (!err?.suppressToast && !isAssinaturaBloqueioError(err)) {

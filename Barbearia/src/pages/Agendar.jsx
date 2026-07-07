@@ -7,6 +7,7 @@ import { VitrineService } from '../services/Agendamentos/VitrineService';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { LoginModal } from '../components/Auth/LoginModal';
+import { trackPixel } from '../utils/metaPixel';
 import '../index.css';
 
 /**
@@ -190,6 +191,12 @@ function App() {
       const dataResult = res?.Data ?? res?.data ?? res?.dados ?? res;
       
       toast.success('Agendamento realizado com sucesso!');
+
+      trackPixel('Schedule', {
+        value: totalPrice,
+        currency: 'BRL',
+        num_items: selectedServices.length,
+      });
 
       // Solução definitiva: emojis via String.fromCodePoint (runtime - bypass total de file encoding)
       // Usando apenas emojis do bloco moderno U+1F... que têm suporte universal no WhatsApp

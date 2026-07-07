@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Scissors, Mail, Lock, ArrowRight, Eye, EyeOff, Building2, User } from 'lucide-react';
 import { GoogleLoginButton } from '../components/Auth/GoogleLoginButton';
 import { isClienteUser } from '../utils/userPolicy';
+import { trackPixel } from '../utils/metaPixel';
 
 export function Login() {
     const { login, registrar, loginGoogle } = useAuth();
@@ -51,7 +52,10 @@ export function Login() {
                 telefone: telefone.trim() || undefined,
             });
             setLoading(false);
-            if (result?.success) redirectAfterAuth(result.user);
+            if (result?.success) {
+                trackPixel('CompleteRegistration', { content_category: tipoCadastro });
+                redirectAfterAuth(result.user);
+            }
         } else {
             const result = await login(email, password);
             setLoading(false);
@@ -79,7 +83,10 @@ export function Login() {
             return;
         }
         setLoading(false);
-        if (result?.success) redirectAfterAuth(result.user);
+        if (result?.success) {
+            if (isRegister) trackPixel('CompleteRegistration', { content_category: tipoCadastro });
+            redirectAfterAuth(result.user);
+        }
     };
 
     const confirmGoogleTipo = async () => {
@@ -94,7 +101,10 @@ export function Login() {
         setLoading(false);
         setShowTipoModal(false);
         setGooglePending(null);
-        if (result?.success) redirectAfterAuth(result.user);
+        if (result?.success) {
+            trackPixel('CompleteRegistration', { content_category: tipoCadastro });
+            redirectAfterAuth(result.user);
+        }
     };
 
     return (
@@ -651,7 +661,7 @@ export function Login() {
                                     Ainda não tem cadastro?{' '}
                                     <button
                                         type="button"
-                                        onClick={() => setIsRegister(true)}
+                                        onClick={() => { setIsRegister(true); trackPixel('Lead'); }}
                                         style={{ background: 'none', border: 'none', color: '#d4af37', fontWeight: 'bold', cursor: 'pointer', padding: 0 }}
                                     >
                                         Cadastre-se aqui
